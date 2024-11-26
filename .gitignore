@@ -1,0 +1,7 @@
+*.aux
+*.log
+*.out
+*.py
+*.synctex.gz
+DM2.pdf
+archive/
