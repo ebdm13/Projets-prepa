@@ -2,7 +2,10 @@
 #include<stdint.h>
 #include <stdbool.h>
 #include <assert.h>
-#include "sound.c"
+#include "sound.h"
+#include "waveform.h"
+#include<stdlib.h>
+#include<time.h>
 
 int f_ech = 44100;
 int L = 16;
@@ -43,13 +46,22 @@ void save_sound(char* filename, sound_t* s){
 	}
 	fclose(f);
 }
-
-int main(){
+void test(){
 	int16_t val[3] = {15387, 815, -6337};
 	sound_t court = {
 		.n_samples = 3,
 		.samples = val,
 	};
 	save_sound("test2.wav", &court);
+	srand(time(NULL));
+	sound_t* s = white(10, f_ech);
+	save_sound("bruit.wav", s);
+	free_sound(s);
+	s = sine(440, 10000, 10, f_ech);
+	save_sound("440.wav", s);
+	free_sound(s);
+
+}
+int main(){
 
 }
