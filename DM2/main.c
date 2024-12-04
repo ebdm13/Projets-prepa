@@ -60,8 +60,32 @@ void test(){
 	s = sine(440, 10000, 10, f_ech);
 	save_sound("440.wav", s);
 	free_sound(s);
-
+	s = square(440, 10000, 10, f_ech);
+	save_sound("square.wav", s);
+	free_sound(s);
+	s = triangle(440, 10000, 10, f_ech);
+	save_sound("triangle.wav", s);
+	free_sound(s);
+	s = sawtooth(440, 10000, 10, f_ech);
+	save_sound("sawtooth.wav", s);
+	free_sound(s);
 }
 int main(){
-
+	// test();
+	track_t* t = malloc(sizeof(track_t));
+	t->sounds = malloc(9 * sizeof(sound_t*));
+	t->sounds[0] = sine(440, 0, 0.5, f_ech);
+	t->sounds[1] = sine(440, 16000, 0.4, f_ech);
+	t->sounds[2] = sine(440, 0, 0.1, f_ech);
+	t->sounds[3] = sine(440, 16000, 0.4, f_ech);
+	t->sounds[4] = sine(440, 0, 0.1, f_ech);
+	t->sounds[5] = sine(440, 16000, 0.5, f_ech);
+	t->sounds[6] = sine(493.88, 16000, 0.5, f_ech);
+	t->sounds[7] = sine(554.36, 16000, 1, f_ech);
+	t->sounds[8] = sine(493.88, 16000, 1, f_ech);
+	t->n_sounds = 9;
+	sound_t* s = reduce_track(t);
+	save_sound("Au clair de la lune.wav", s);
+	free_track(t);
+	free_sound(s);
 }
