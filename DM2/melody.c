@@ -1,6 +1,5 @@
 #include <math.h>
 #include <assert.h>
-#include <stdatomic.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include "melody.h"
