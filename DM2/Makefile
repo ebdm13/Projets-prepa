@@ -1,2 +1,2 @@
 compile:
-	gcc main.c sound.c waveform.c -o prog -lm
+	gcc main.c sound.c waveform.c melody.c -o prog -lm
