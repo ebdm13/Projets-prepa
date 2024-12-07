@@ -1,6 +1,24 @@
 #include "waveform.h"
 #include <stdlib.h>
 #include <math.h>
+#include <string.h>
+
+signaux_t signaux[] = {
+	{"sine", sine},
+	{"square", square},
+	{"triangle", triangle},
+	{"sawtooth", sawtooth},
+	{NULL, NULL}
+};
+
+signal_t get_signal(char *nom){
+	for (signaux_t *sg = signaux; sg->nom != NULL; sg++){
+		if (strcmp(nom, sg->nom) == 0){
+			return sg->signale; 
+		}	
+	}
+	return NULL;
+}
 
 sound_t* white(float duree, int f_ech){
 	sound_t* s = malloc(sizeof(sound_t));

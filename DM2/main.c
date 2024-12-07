@@ -4,6 +4,7 @@
 #include <assert.h>
 #include "sound.h"
 #include "waveform.h"
+#include "melody.h"
 #include<stdlib.h>
 #include<time.h>
 
@@ -69,9 +70,6 @@ void test(){
 	s = sawtooth(440, 10000, 10, f_ech);
 	save_sound("sawtooth.wav", s);
 	free_sound(s);
-}
-int main(){
-	// test();
 	track_t* t = malloc(sizeof(track_t));
 	t->sounds = malloc(9 * sizeof(sound_t*));
 	t->sounds[0] = sine(440, 0, 0.5, f_ech);
@@ -84,8 +82,19 @@ int main(){
 	t->sounds[7] = sine(554.36, 16000, 1, f_ech);
 	t->sounds[8] = sine(493.88, 16000, 1, f_ech);
 	t->n_sounds = 9;
-	sound_t* s = reduce_track(t);
+	s = reduce_track(t);
 	save_sound("Au clair de la lune.wav", s);
 	free_track(t);
 	free_sound(s);
+
 }
+int main(){
+	// test();
+	FILE* f = fopen("../archive/question_15/sonata_une_piste.txt", "r");
+	track_t* t = read_track(f);
+	sound_t* s = reduce_track(t);
+	save_sound("sonata.wav",s);
+	free_sound(s);
+	free_track(t);
+	fclose(f);
+	}
