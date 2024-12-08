@@ -10,3 +10,6 @@ n lignes suivantes : la hauteur, la durée et le volume de chaque note.
 Et renvoie la piste correspondant.
 */
 track_t* read_track(FILE* file);
+
+/*Charge depuis un fichier le mix correspondant*/
+mix_t* load_mix(char* filename);
