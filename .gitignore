@@ -5,3 +5,6 @@
 *.synctex.gz
 DM2.pdf
 archive/
+*.wav
+*
+!*.*

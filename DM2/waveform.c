@@ -20,76 +20,76 @@ signal_t get_signal(char *nom){
 	return NULL;
 }
 
-sound_t* white(float duree, int f_ech){
+sound_t* white(double duree, int f_ech){
 	sound_t* s = malloc(sizeof(sound_t));
-	int16_t* samples = malloc(duree * f_ech * sizeof(int16_t));
-	for (int i = 0; i < duree * f_ech; i++){
-		samples[i] = (rand() % 65536) - 32768;
+	int n = (int)(duree * f_ech)+1;
+	s->samples = malloc(n * sizeof(int16_t));
+	for (int i = 0; i < n; i++){
+		s->samples[i] = (rand() % 65536) - 32768;
 	}
-	s->samples = samples;
-	s->n_samples = duree * f_ech;
+	s->n_samples = n;
 	return s;
 }
 
-sound_t* sine(float frequence, float amplitude, float duree, int f_ech){
+sound_t* sine(double frequence, double amplitude, double duree, int f_ech){
 	sound_t* s = malloc(sizeof(sound_t));
-	int16_t* samples = malloc(duree * f_ech * sizeof(int16_t));
-	for (int i = 0; i < duree * f_ech; i++){
-		samples[i] = amplitude * sin(2 * M_PI * frequence * i / f_ech);
+	int n = (int)(duree * f_ech)+1;
+	s->samples = malloc(n * sizeof(int16_t));
+	for (int i = 0; i < n; i++){
+		s->samples[i] = (int16_t)(amplitude * sin(2 * M_PI * frequence * i / f_ech));
 	}
-	s->samples = samples;
-	s->n_samples = duree * f_ech;
+	s->n_samples = n;
 	return s;
 }
 
-sound_t* square(float frequence, float amplitude, float duree, int f_ech){
+sound_t* square(double frequence, double amplitude, double duree, int f_ech){
 	sound_t* s = malloc(sizeof(sound_t));
-	int16_t* samples = malloc(duree * f_ech * sizeof(int16_t));
-	float f_r = frequence / f_ech;
+	int n = (int)(duree * f_ech)+1;
+	s->samples = malloc(n * sizeof(int16_t));
+	double f_r = frequence / f_ech;
 	int signe = 1;
-	for (int i = 0; i < duree * f_ech; i++){
+	for (int i = 0; i < n; i++){
 		if (i % (int)(1/(2 * f_r)) == 0){
 			signe *= -1;
 		}
-		samples[i] = amplitude * signe; 
+		s->samples[i] = (int16_t)(amplitude * signe); 
 	}
-	s->samples = samples;
-	s->n_samples = duree * f_ech;
+	s->n_samples = n;
 	return s;
 }
 
-sound_t* triangle(float frequence, float amplitude, float duree, int f_ech){
+sound_t* triangle(double frequence, double amplitude, double duree, int f_ech){
 	sound_t* s = malloc(sizeof(sound_t));
-	int16_t* samples = malloc(duree * f_ech * sizeof(int16_t));
-	float f_r = frequence / f_ech;
-	float pente = 4 * amplitude * f_r;
+	int n = (int)(duree * f_ech)+1;
+	s->samples = malloc(n * sizeof(int16_t));
+	double f_r = frequence / f_ech;
+	double pente = 4 * amplitude * f_r;
 	int signe = -1;
-	float origine = 0; 
-	for (int i = 0; i < duree * f_ech; i++){
+	double origine = 0; 
+	for (int i = 0; i < n; i++){
 		if (i % (int)(1 / (2 * f_r)) == 0) {
 			signe *= -1;
 			origine = i; 
 		}
-		samples[i] = (i - origine) * signe * pente - amplitude * signe;
+		s->samples[i] = (int16_t)((i - origine) * signe * pente - amplitude * signe);
 	}
-	s->samples = samples;
-	s->n_samples = duree * f_ech;
+	s->n_samples = n;
 	return s;
 }
 
-sound_t* sawtooth(float frequence, float amplitude, float duree, int f_ech){
+sound_t* sawtooth(double frequence, double amplitude, double duree, int f_ech){
 	sound_t* s = malloc(sizeof(sound_t));
-	int16_t* samples = malloc(duree * f_ech * sizeof(int16_t));
-	float f_r = frequence / f_ech;
-	float pente = 2 * amplitude * f_r;
-	float origine = 0; 
-	for (int i = 0; i < duree * f_ech; i++){
+	int n = (int)(duree * f_ech)+1;
+	s->samples = malloc(n * sizeof(int16_t));
+	double f_r = frequence / f_ech;
+	double pente = 2 * amplitude * f_r;
+	double origine = 0; 
+	for (int i = 0; i < n; i++){
 		if (i % (int)(1 / f_r) == 0) {
 			origine = i; 
 		}
-		samples[i] = (i - origine) * pente - amplitude;
+		s->samples[i] = (int16_t)((i - origine) * pente - amplitude);
 	}
-	s->samples = samples;
-	s->n_samples = duree * f_ech;
+	s->n_samples = n;
 	return s;
 }
