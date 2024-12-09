@@ -46,7 +46,7 @@ sound_t* reduce_mix(mix_t* m){
 	assert((m != NULL) & (m->n_track != 0) && (m->tracks != NULL) & (m->vols != NULL));
 	sound_t* s = malloc(sizeof(sound_t));
 	sound_t* s_temp;
-	int n = m->tracks[0]->sounds[0]->n_samples;
+	int n = 0;
 	int* samples_sum = calloc(n, sizeof(int));
 
 	for (int i = 0; i < m->n_track; i++){

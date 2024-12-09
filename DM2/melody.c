@@ -16,7 +16,6 @@ track_t* read_track(FILE* file){
 	int n;
 	char* nom_signal = malloc(15 * sizeof(char));
 	fscanf(file, "%d %s", &n, nom_signal);
-	assert(n != 0);
 	signal_t signal = get_signal(nom_signal);
 	assert(signal != NULL);
 	track_t* t = malloc(sizeof(track_t));
