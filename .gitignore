@@ -1,7 +1,7 @@
 *.aux
 *.log
 *.out
-*.py
+plotwav.py
 *.synctex.gz
 DM2.pdf
 archive/
