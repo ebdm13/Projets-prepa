@@ -1,10 +1,10 @@
 *.aux
 *.log
 *.out
-plotwav.py
 *.synctex.gz
 DM2.pdf
 archive/
 *.wav
 *
 !*.*
+plotwav.py
