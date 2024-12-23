@@ -170,12 +170,12 @@ Token* get_token(char* buffer){
 		switch (buffer[0]) {
 			case '=': return create_token(EQUAL, "=");
 			case '(': return create_token(LEFT_PAREN, "(");
-            case ')': return create_token(RIGHT_PAREN, ")");
-            case '{': return create_token(LEFT_BRACE, "{");
-            case '}': return create_token(RIGHT_BRACE, "}");
-            case '|': return create_token(BARLINE, "|");
-            case '~': return create_token(TIE, "~");
-            default: break;
+			case ')': return create_token(RIGHT_PAREN, ")");
+			case '{': return create_token(LEFT_BRACE, "{");
+			case '}': return create_token(RIGHT_BRACE, "}");
+			case '|': return create_token(BARLINE, "|");
+			case '~': return create_token(TIE, "~");
+			default: break;
 		}
 	}
 	return create_token(IDENTIFIER, buffer);
@@ -217,11 +217,11 @@ TokenNode* lexer(FILE* f){
 			newToken = get_string(f, linenumber, tokenQueue);
 			endOfWord = true;
 		} else if (c == '(' || c == ')' || c == '#' || c == '\\') {
-            switch (c) {
-                case '(': newToken = create_token(LEFT_PAREN, "("); break;
-                case ')': newToken = create_token(RIGHT_PAREN, ")"); break;
-                case '#': newToken = create_token(HASH, "#"); break;
-                case '\\': newToken = create_token(BACKSLASH, "\\"); break;
+			switch (c) {
+            	case '(': newToken = create_token(LEFT_PAREN, "("); break;
+            	case ')': newToken = create_token(RIGHT_PAREN, ")"); break;
+            	case '#': newToken = create_token(HASH, "#"); break;
+            	case '\\': newToken = create_token(BACKSLASH, "\\"); break;
             }
             endOfWord = true;
         }
