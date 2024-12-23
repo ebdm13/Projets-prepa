@@ -5,6 +5,8 @@
 *.out
 *.synctex.gz
 *.wav
-DM2.pdf
+*.ly
+*.pdf
+!reponses.pdf
 archive/
 plotwav.py
