@@ -111,6 +111,9 @@ Token* create_token(TokenType type, char* lexem);
 /*Ajoute le token à la liste en le reliant à head en renvoi un pointeur vers la nouvelle head*/
 TokenNode* add_token(TokenNode* head, Token* token);
 
+/*Renvoie le type du token en str*/
+char* get_type(Token token);
+
 /*affiche le type et le lexem d'un token*/
 void print_token(Token* token);
 

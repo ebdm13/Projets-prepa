@@ -136,6 +136,10 @@ char* type_name_map[] = {
 	"EOT",
 };
 
+char* get_type(Token token){
+	return type_name_map[token.type];
+}
+
 void print_token(Token* token){
 	assert(token != NULL);
 	printf("(%s): %s\n", type_name_map[token->type], token->lexem);	
@@ -151,7 +155,7 @@ void print_tokens(TokenNode *queue){
 	print_token(node->token);
 }
 
-void test(){
+void test_token(){
 	TokenNode* queu = malloc(sizeof(TokenNode));
 	queu->token = create_token(BOT, "");
 	TokenNode* head = add_token(queu, create_token(NUMBER, "45"));

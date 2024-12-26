@@ -1,28 +1,10 @@
 #include "lexer.h"
+#include "error.h"
 #include <stdio.h>
 #include <string.h>
 #include<stdlib.h>
 #include<assert.h>
 #include<stdbool.h>
-
-void error(char* message, int linenumber){
-	assert(message != NULL);
-	if (linenumber == 0){
-		fprintf(stderr, "\033[31mERREUR: %s\033[0m\n", message);
-	} else {
-		fprintf(stderr, "\033[31mERREUR (l:%d): %s\033[0m\n", linenumber, message);
-	}
-	exit(EXIT_FAILURE);
-}
-
-void warning(char* message, int linenumber){
-	assert(message != NULL);
-	if (linenumber == 0){
-		fprintf(stderr, "\033[38;5;208mWARNING: %s\033[0m\n", message);
-	} else {
-		fprintf(stderr, "\033[38;5;208mWARNING (l:%d): %s\033[0m\n", linenumber, message);
-	}
-}
 
 bool isCommand(char* s){
 	assert(s != NULL);
@@ -169,12 +151,7 @@ Token* get_token(char* buffer){
 	if (strlen(buffer) == 1) {
 		switch (buffer[0]) {
 			case '=': return create_token(EQUAL, "=");
-			case '(': return create_token(LEFT_PAREN, "(");
-			case ')': return create_token(RIGHT_PAREN, ")");
-			case '{': return create_token(LEFT_BRACE, "{");
-			case '}': return create_token(RIGHT_BRACE, "}");
 			case '|': return create_token(BARLINE, "|");
-			case '~': return create_token(TIE, "~");
 			default: break;
 		}
 	}
@@ -216,11 +193,14 @@ TokenNode* lexer(FILE* f){
 			}
 			newToken = get_string(f, linenumber, tokenQueue);
 			endOfWord = true;
-		} else if (c == '(' || c == ')' || c == '#' || c == '\\') {
+		} else if (c == '(' || c == ')' || c == '#' || c == '}' || c == '{' || c == '\\' || c == '~') {
 			switch (c) {
             	case '(': newToken = create_token(LEFT_PAREN, "("); break;
             	case ')': newToken = create_token(RIGHT_PAREN, ")"); break;
+            	case '{': newToken = create_token(LEFT_BRACE, "{"); break;
+            	case '}': newToken = create_token(RIGHT_BRACE, "}"); break;
             	case '#': newToken = create_token(HASH, "#"); break;
+            	case '~': newToken = create_token(TIE, "~"); break;
             	case '\\': newToken = create_token(BACKSLASH, "\\"); break;
             }
             endOfWord = true;
@@ -256,11 +236,11 @@ TokenNode* lexer(FILE* f){
 	return tokenQueue;
 }
 
-int main(int argc, char** argv){
-	FILE* f = fopen(argv[1], "r");
-	TokenNode* tokenQueue = lexer(f);
-	fclose(f);
-	print_tokens(tokenQueue);
-	free_list(tokenQueue);
-	return 0;	
-}
+// int main(int argc, char** argv){
+// 	FILE* f = fopen(argv[1], "r");
+// 	TokenNode* tokenQueue = lexer(f);
+// 	fclose(f);
+// 	print_tokens(tokenQueue);
+// 	free_list(tokenQueue);
+// 	return 0;	
+// }
