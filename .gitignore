@@ -8,6 +8,7 @@
 *.wav
 *.ly
 *.pdf
+*.midi
 !reponses.pdf
 archive/
 plotwav.py
