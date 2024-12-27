@@ -14,7 +14,7 @@ add_command_t add_command_map[] = {add_unknown};
 AST_node* parse(TokenNode* TokenQueue){
 	assert(TokenQueue != NULL);
 	TokenNode* head = TokenQueue;
-	AST_node* root = create_AST_node(head->token);
+	AST_node* root = create_AST_node(head->token, head->linenumber);
 	while (head->next != NULL){
 		head = head->next;
 		if (is_type_command(head->token)){

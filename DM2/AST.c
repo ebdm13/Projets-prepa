@@ -5,10 +5,11 @@
 #include <assert.h>
 #include <stdio.h>
 
-AST_node* create_AST_node(Token* token) {
+AST_node* create_AST_node(Token* token, int numberline) {
 	assert(token != NULL);
 	AST_node* node = malloc(sizeof(AST_node));
 	node->token = token;
+	node->numberline = numberline;
 	node->parent = NULL;
 	node->first_child = NULL;
 	node->next_sibling = NULL;
@@ -92,15 +93,15 @@ void print_AST(AST_node *root){
 }
 
 void test_AST(){
-	AST_node* root = create_AST_node(create_token(BOT, ""));
+	AST_node* root = create_AST_node(create_token(BOT, ""), 0);
 	AST_node* relative = create_AST_node(create_token(COMMAND_RELATIVE, "\\relative"));
-	AST_node* relative_note = create_AST_node(create_token(NOTE, "c''"));
-	AST_node* key = create_AST_node(create_token(COMMAND_KEY, "\\key"));
-	AST_node* key_note = create_AST_node(create_token(NOTE, "a"));
-	AST_node* note_1 = create_AST_node(create_token(NOTE, "a4"));
-	AST_node* note_2 = create_AST_node(create_token(NOTE, "c2"));
-	AST_node* note_3 = create_AST_node(create_token(NOTE, "f'"));
-	AST_node* duree = create_AST_node(create_token(DUREE, "4"));
+	AST_node* relative_note = create_AST_node(create_token(NOTE, "c''"), 0);
+	AST_node* key = create_AST_node(create_token(COMMAND_KEY, "\\key"), 0);
+	AST_node* key_note = create_AST_node(create_token(NOTE, "a"), 0);
+	AST_node* note_1 = create_AST_node(create_token(NOTE, "a4"), 0);
+	AST_node* note_2 = create_AST_node(create_token(NOTE, "c2"), 0);
+	AST_node* note_3 = create_AST_node(create_token(NOTE, "f'"), 0);
+	AST_node* duree = create_AST_node(create_token(DUREE, "4"), 0);
 	add_child(root, relative);
 	add_child(relative, relative_note);
 	add_child(relative, key);
