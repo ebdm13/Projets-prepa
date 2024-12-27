@@ -1,6 +1,6 @@
 #include "token.h"
 #include <stdlib.h>
-#include<stdio.h>
+#include <stdio.h>
 #include <string.h>
 #include <assert.h>
 
@@ -18,11 +18,12 @@ Token* create_token(TokenType type, char* lexem){
 	return token;
 }
 
-TokenNode* add_token(TokenNode *head, Token* token){
+TokenNode* add_token(TokenNode *head, Token* token, int linenumber){
 	assert(head != NULL);
 	assert(token != NULL);
 	TokenNode* new_node = malloc(sizeof(TokenNode));	
 	new_node->token = token;
+	new_node->linenumber = linenumber;
 	new_node->next = NULL;
 	while (head->next != NULL){
 		head = head->next;
@@ -136,8 +137,34 @@ char* type_name_map[] = {
 	"EOT",
 };
 
-char* get_type(Token token){
-	return type_name_map[token.type];
+char* get_type(Token* token){
+	return type_name_map[token->type];
+}
+
+bool is_type_command(Token *token){
+	// Méthode archaïque, mais permet de ne pas modifier la fonction à chaque 
+	//fois qu'on ajoute ou enlève une commande.
+	bool ok = true;
+	char* type = get_type(token);
+	if (strlen(type) > 8) {
+		for (int i = 0; i < 8;i++){
+			switch (i) {
+				case 0: ok = type[0] == 'C'; break;
+				case 1: ok = type[1] == 'O'; break;
+				case 2: ok = type[2] == 'M'; break;
+				case 3: ok = type[3] == 'M'; break;
+				case 4: ok = type[4] == 'A'; break;
+				case 5: ok = type[5] == 'N'; break;
+				case 6: ok = type[6] == 'D'; break;
+				case 7: ok = type[7] == '_'; break;
+			}
+			if (!ok){
+				return false;
+			}
+		}
+		return true;
+	}
+	return false;
 }
 
 void print_token(Token* token){
@@ -158,10 +185,16 @@ void print_tokens(TokenNode *queue){
 void test_token(){
 	TokenNode* queu = malloc(sizeof(TokenNode));
 	queu->token = create_token(BOT, "");
-	TokenNode* head = add_token(queu, create_token(NUMBER, "45"));
-	head = add_token(head, create_token(EQUAL, "="));
-	head = add_token(head, create_token(NUMBER, "45"));
-	head = add_token(head, create_token(EOT, ""));
+	queu->next = NULL;
+	TokenNode* head = add_token(queu, create_token(NUMBER, "45"), 0);
+	head = add_token(head, create_token(EQUAL, "="), 0);
+	head = add_token(head, create_token(NUMBER, "45"), 0);
+	head = add_token(head, create_token(EOT, ""), 0);
 	print_tokens(queu);
 	free_list(queu);
 }
+
+// int main(){
+// 	test_token();
+// 	return 0;
+// }

@@ -4,19 +4,19 @@
 #include <stdbool.h>
 
 typedef struct AST_node {
-	Token value;
+	Token* token;
 	struct AST_node* parent;
 	struct AST_node* first_child;	
 	struct AST_node* next_sibling;
 } AST_node;
 
 /*Renvoie un pointeur vers le nouveaux noeud de l'AST*/
-AST_node* create_AST_node(TokenType type, char* lexem);
+AST_node* create_AST_node(Token* token);
 
 /*Ajoute child commen enfant de parent*/
 void add_child(AST_node* parent, AST_node* child);
 
-/*Libère la mémoire alouée pour l'AST*/
+/*Libère la mémoire alouée pour l'AST SAUF POUR TOKEN !!*/
 void free_AST(AST_node* root);
 
 /*Affiche un noeud de l'AST avec une indentation initiale de indent tabulations 

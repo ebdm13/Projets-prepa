@@ -1,4 +1,5 @@
 #pragma once
+#include<stdbool.h>
 
 typedef enum {
 	COMMAND_UNKNOWN,
@@ -100,6 +101,7 @@ typedef struct {
 typedef struct TokenNode {
     Token* token;
     struct TokenNode* next;
+    int linenumber;
 } TokenNode;
 
 /*Libère la mémoire alouée pour t*/
@@ -109,10 +111,13 @@ void free_token(Token* t);
 Token* create_token(TokenType type, char* lexem);
 
 /*Ajoute le token à la liste en le reliant à head en renvoi un pointeur vers la nouvelle head*/
-TokenNode* add_token(TokenNode* head, Token* token);
+TokenNode* add_token(TokenNode* head, Token* token, int linenumber);
 
 /*Renvoie le type du token en str*/
-char* get_type(Token token);
+char* get_type(Token* token);
+
+/*Vérifie si un token est de type COMMAND_*/
+bool is_type_command(Token* token);
 
 /*affiche le type et le lexem d'un token*/
 void print_token(Token* token);

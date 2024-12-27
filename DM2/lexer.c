@@ -168,7 +168,7 @@ TokenNode* lexer(FILE* f){
 	tokenQueue->token = create_token(BOT, "");
 	tokenQueue->next = NULL;
 	char c;
-	char buffer[1024] = {0};
+	char buffer[100] = {0};
 	int linenumber = 1;
 	TokenNode* head = tokenQueue;
 	Token* newToken = NULL;
@@ -208,7 +208,7 @@ TokenNode* lexer(FILE* f){
 
 		if (endOfWord) {
 			if (strlen(buffer) != 0) {
-				head = add_token(head, get_token(buffer));
+				head = add_token(head, get_token(buffer), linenumber);
 			}
 
 			endOfWord = false;
@@ -223,16 +223,20 @@ TokenNode* lexer(FILE* f){
 					newToken = NULL;
 					i = 1;
 				} else {
-					head = add_token(head, newToken);
+					head = add_token(head, newToken, linenumber);
 					newToken = NULL;
 				}
 			}
 		} else {
-			buffer[i++] = c;
-			buffer[i] = '\0';
+			if (i < 99) {
+				buffer[i++] = c;
+				buffer[i] = '\0';
+			} else {
+				error("Buffer overflow, ce mot est trop long.", linenumber);
+			}
 		}
 	}
-	head = add_token(head, create_token(EOT, ""));
+	head = add_token(head, create_token(EOT, ""), linenumber);
 	return tokenQueue;
 }
 
