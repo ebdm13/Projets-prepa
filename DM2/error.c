@@ -1,23 +1,40 @@
 #include <assert.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdarg.h>
 
-void error(char* message, int linenumber){
-	assert(message != NULL);
-	if (linenumber == 0){
-		fprintf(stderr, "\033[31mERREUR: %s\033[0m\n", message);
-	} else {
-		fprintf(stderr, "\033[31mERREUR (l:%d): %s\033[0m\n", linenumber, message);
-	}
-	exit(EXIT_FAILURE);
+#define ANSI_RED "\033[31m"
+#define ANSI_ORANGE "\033[38;5;208m"
+#define ANSI_RESET "\033[0m"
+
+void error(int linenumber, char* format, ...){
+	assert(format != NULL);
+    va_list args;
+    va_start(args, format);
+
+    if (linenumber == 0) {
+        fprintf(stderr, ANSI_RED "ERREUR: ");
+    } else {
+        fprintf(stderr, ANSI_RED "ERREUR (l:%d): ", linenumber);
+    }
+    vfprintf(stderr, format, args);
+    fprintf(stderr, ANSI_RESET "\n");
+
+    va_end(args);
 }
 
-void warning(char* message, int linenumber){
-	assert(message != NULL);
-	if (linenumber == 0){
-		fprintf(stderr, "\033[38;5;208mWARNING: %s\033[0m\n", message);
-	} else {
-		fprintf(stderr, "\033[38;5;208mWARNING (l:%d): %s\033[0m\n", linenumber, message);
-	}
+void warning(int linenumber, char* format, ...){
+	assert(format != NULL);
+    va_list args;
+    va_start(args, format);
+
+    if (linenumber == 0) {
+        fprintf(stderr, ANSI_ORANGE "WARNING: ");
+    } else {
+        fprintf(stderr, ANSI_ORANGE "WARNING (l:%d): ", linenumber);
+    }
+    vfprintf(stderr, format, args);
+    fprintf(stderr, ANSI_RESET "\n");
+
+    va_end(args);	
 }
 

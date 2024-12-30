@@ -92,6 +92,8 @@ char* type_name_map[] = {
 	// Autres
 	"COMMAND_BAR",
 	"COMMAND_PARTIAL",
+	"VAR_NAME",
+	"VAR_CALL",
 	"REST",
 	// a b c d e f g
 	"NOTE",
@@ -193,8 +195,3 @@ void test_token(){
 	print_tokens(queu);
 	free_list(queu);
 }
-
-// int main(){
-// 	test_token();
-// 	return 0;
-// }

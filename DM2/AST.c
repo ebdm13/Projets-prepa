@@ -5,15 +5,19 @@
 #include <assert.h>
 #include <stdio.h>
 
-AST_node* create_AST_node(Token* token, int numberline) {
+AST_node* create_AST_node(Token* token, int linenumber) {
 	assert(token != NULL);
 	AST_node* node = malloc(sizeof(AST_node));
 	node->token = token;
-	node->numberline = numberline;
+	node->linenumber = linenumber;
 	node->parent = NULL;
 	node->first_child = NULL;
 	node->next_sibling = NULL;
 	return node;
+}
+
+AST_node* create_node(TokenNode *node){
+	return create_AST_node(node->token, node->linenumber);
 }
 
 void add_child(AST_node* parent, AST_node* child){
@@ -45,12 +49,15 @@ void free_AST(AST_node* root){
 	free(root);
 }
 
-void print_AST_node(AST_node* root, int indent, bool sticks[100]){
+void print_AST_node(AST_node* node, AST_node* root, int indent, bool sticks[100]){
 	if (indent >= 100) {
-		error("Arbre trop profond, il y a trop de noeuds enfants.", 0);
+		int linenumber = node->linenumber;
+		free_AST(root);
+		error(linenumber, "Arbre trop profond, il y a trop de noeuds enfants.");
+		exit(EXIT_FAILURE);
 	}
 
-	if (root == NULL){
+	if (node == NULL){
 		return;
 	}
 
@@ -62,8 +69,8 @@ void print_AST_node(AST_node* root, int indent, bool sticks[100]){
 		}
 	}
 
-	if (root->token->type != BOT){
-		if (root->next_sibling != NULL){
+	if (node->token->type != BOT){
+		if (node->next_sibling != NULL){
 			printf("├── ");
 		} else {
 			printf("└── ");
@@ -71,15 +78,15 @@ void print_AST_node(AST_node* root, int indent, bool sticks[100]){
 		}
 	}
 	
-	if (root->first_child != NULL){
-		printf("%s\n", get_type(root->token));
-		print_AST_node(root->first_child, indent + 1, sticks);
+	if (node->first_child != NULL){
+		printf("%s\n", get_type(node->token));
+		print_AST_node(node->first_child, root, indent + 1, sticks);
 	} else {
-		printf("%s: %s\n", get_type(root->token), root->token->lexem);
+		printf("%s: %s\n", get_type(node->token), node->token->lexem);
 	}
 
-	if (root->next_sibling != NULL){
-		print_AST_node(root->next_sibling, indent, sticks);
+	if (node->next_sibling != NULL){
+		print_AST_node(node->next_sibling, root, indent, sticks);
 	}
 }
 
@@ -89,12 +96,12 @@ void print_AST(AST_node *root){
 	for (int i = 0; i < 100; i++){
 		sticks[i] = true;
 	}
-	print_AST_node(root, 0, sticks);
+	print_AST_node(root, root,0, sticks);
 }
 
 void test_AST(){
 	AST_node* root = create_AST_node(create_token(BOT, ""), 0);
-	AST_node* relative = create_AST_node(create_token(COMMAND_RELATIVE, "\\relative"));
+	AST_node* relative = create_AST_node(create_token(COMMAND_RELATIVE, "\\relative"), 0);
 	AST_node* relative_note = create_AST_node(create_token(NOTE, "c''"), 0);
 	AST_node* key = create_AST_node(create_token(COMMAND_KEY, "\\key"), 0);
 	AST_node* key_note = create_AST_node(create_token(NOTE, "a"), 0);
@@ -117,9 +124,4 @@ void test_AST(){
 		free_token(nodes[i]->token);
 	}
 	free_AST(root);
-}
-
-int main(){
-	test_AST();
-	return 0;
 }

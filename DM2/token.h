@@ -47,6 +47,8 @@ typedef enum {
 	// Autres
 	COMMAND_BAR,
 	COMMAND_PARTIAL,
+	VAR_NAME,
+	VAR_CALL,
 	REST,
 	// a b c d e f g
 	NOTE,

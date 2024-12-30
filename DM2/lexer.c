@@ -39,10 +39,11 @@ bool isNumber(char* s){
 	return true;
 }
 
-int skip_comment(FILE* f, int* linenumber){
+int skip_comment(FILE* f, int* linenumber, TokenNode* queu){
 	assert(linenumber != NULL);
 	if (f == NULL) {
-		error("Fichier invalide", *linenumber);
+		free_list(queu);
+		error(*linenumber, "Fichier invalide");
 		exit(EXIT_FAILURE);
 	}
 	char c;
@@ -67,8 +68,8 @@ int skip_comment(FILE* f, int* linenumber){
 Token* get_string(FILE* f, int linenumber, TokenNode* queue){
 	assert(queue != NULL);
 	if (f == NULL) {
-		error("Fichier invalide", linenumber);
 		free_list(queue);
+		error(linenumber, "Fichier invalide");
 		exit(EXIT_FAILURE);
 	}
 
@@ -79,8 +80,8 @@ Token* get_string(FILE* f, int linenumber, TokenNode* queue){
 	int i = 1;
 	while (c != '"'){
 		if (a == EOF || c == '\n'){
-			error("\" manquant", linenumber);
 			free_list(queue);
+			error(linenumber, "\" manquant");
 			exit(EXIT_FAILURE);
 		}
 		string[i++] = c;
@@ -148,19 +149,12 @@ Token* get_token(char* buffer){
 	if (isCommand(buffer)) return get_command(buffer);
 	if (isRest(buffer)) return get_rest(buffer);
 	if (isNumber(buffer)) return create_token(NUMBER, buffer);
-	if (strlen(buffer) == 1) {
-		switch (buffer[0]) {
-			case '=': return create_token(EQUAL, "=");
-			case '|': return create_token(BARLINE, "|");
-			default: break;
-		}
-	}
 	return create_token(IDENTIFIER, buffer);
 }
 
 TokenNode* lexer(FILE* f){
 	if (f == NULL) {
-		error("Fichier invalide", 0);
+		error(0, "Fichier invalide");
 		exit(EXIT_FAILURE);
 	}
 
@@ -183,17 +177,17 @@ TokenNode* lexer(FILE* f){
 			linenumber++;
 			endOfWord = true;
 		} else if (c == '%'){
-			a = skip_comment(f, &linenumber);
+			a = skip_comment(f, &linenumber, tokenQueue);
 			endOfWord = true;
 		} else if (c == '"') {
 			if (strlen(buffer) != 0) {
-				error("espace manquant", linenumber);
 				free_list(tokenQueue);
+				error(linenumber, "espace manquant après %s", buffer);
 				exit(EXIT_FAILURE);
 			}
 			newToken = get_string(f, linenumber, tokenQueue);
 			endOfWord = true;
-		} else if (c == '(' || c == ')' || c == '#' || c == '}' || c == '{' || c == '\\' || c == '~') {
+		} else {
 			switch (c) {
             	case '(': newToken = create_token(LEFT_PAREN, "("); break;
             	case ')': newToken = create_token(RIGHT_PAREN, ")"); break;
@@ -202,6 +196,9 @@ TokenNode* lexer(FILE* f){
             	case '#': newToken = create_token(HASH, "#"); break;
             	case '~': newToken = create_token(TIE, "~"); break;
             	case '\\': newToken = create_token(BACKSLASH, "\\"); break;
+            	case '=': newToken = create_token(EQUAL, "="); break;
+            	case '|': newToken = create_token(BARLINE, "|"); break;
+            	default: break;
             }
             endOfWord = true;
         }
@@ -232,7 +229,9 @@ TokenNode* lexer(FILE* f){
 				buffer[i++] = c;
 				buffer[i] = '\0';
 			} else {
-				error("Buffer overflow, ce mot est trop long.", linenumber);
+				free_list(tokenQueue);
+				error(linenumber, "Buffer overflow, ce mot est trop long: %s...", buffer);
+				exit(EXIT_FAILURE);
 			}
 		}
 	}
@@ -240,11 +239,11 @@ TokenNode* lexer(FILE* f){
 	return tokenQueue;
 }
 
-// int main(int argc, char** argv){
-// 	FILE* f = fopen(argv[1], "r");
-// 	TokenNode* tokenQueue = lexer(f);
-// 	fclose(f);
-// 	print_tokens(tokenQueue);
-// 	free_list(tokenQueue);
-// 	return 0;	
-// }
+int main(int argc, char** argv){
+	FILE* f = fopen(argv[1], "r");
+	TokenNode* tokenQueue = lexer(f);
+	fclose(f);
+	print_tokens(tokenQueue);
+	free_list(tokenQueue);
+	return 0;	
+}

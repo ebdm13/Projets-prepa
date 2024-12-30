@@ -14,7 +14,7 @@ bool isRest(char* s);
 bool isNumber(char* s);
 
 /*Lit le f jusqu'a atteindre la fin du commentaire et incrémente linenumber en fonction*/
-int skip_comment(FILE* f, int* linenumber);
+int skip_comment(FILE* f, int* linenumber, TokenNode* queue);
 
 /*Lit f jusqu'a trouver un " et renvoie le token de la string*/
 Token* get_string(FILE* f, int linenumber, TokenNode* queue);
