@@ -26,7 +26,6 @@ void warning(int linenumber, char* format, ...){
 	assert(format != NULL);
     va_list args;
     va_start(args, format);
-
     if (linenumber == 0) {
         fprintf(stderr, ANSI_ORANGE "WARNING: ");
     } else {

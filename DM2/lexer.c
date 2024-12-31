@@ -42,8 +42,8 @@ bool isNumber(char* s){
 int skip_comment(FILE* f, int* linenumber, TokenNode* queu){
 	assert(linenumber != NULL);
 	if (f == NULL) {
-		free_list(queu);
 		error(*linenumber, "Fichier invalide");
+		free_list(queu);
 		exit(EXIT_FAILURE);
 	}
 	char c;
@@ -68,8 +68,8 @@ int skip_comment(FILE* f, int* linenumber, TokenNode* queu){
 Token* get_string(FILE* f, int linenumber, TokenNode* queue){
 	assert(queue != NULL);
 	if (f == NULL) {
-		free_list(queue);
 		error(linenumber, "Fichier invalide");
+		free_list(queue);
 		exit(EXIT_FAILURE);
 	}
 
@@ -80,8 +80,8 @@ Token* get_string(FILE* f, int linenumber, TokenNode* queue){
 	int i = 1;
 	while (c != '"'){
 		if (a == EOF || c == '\n'){
-			free_list(queue);
 			error(linenumber, "\" manquant");
+			free_list(queue);
 			exit(EXIT_FAILURE);
 		}
 		string[i++] = c;
@@ -161,6 +161,7 @@ TokenNode* lexer(FILE* f){
 	TokenNode* tokenQueue = malloc(sizeof(TokenNode));
 	tokenQueue->token = create_token(BOT, "");
 	tokenQueue->next = NULL;
+	tokenQueue->linenumber = 0;
 	char c;
 	char buffer[100] = {0};
 	int linenumber = 1;
@@ -181,13 +182,13 @@ TokenNode* lexer(FILE* f){
 			endOfWord = true;
 		} else if (c == '"') {
 			if (strlen(buffer) != 0) {
-				free_list(tokenQueue);
 				error(linenumber, "espace manquant après %s", buffer);
+				free_list(tokenQueue);
 				exit(EXIT_FAILURE);
 			}
 			newToken = get_string(f, linenumber, tokenQueue);
 			endOfWord = true;
-		} else {
+		} else if (c == '(' || c == ')' || c == '#' || c == '}' || c == '{' || c == '\\' || c == '~' || c == '=' || c == '|') {
 			switch (c) {
             	case '(': newToken = create_token(LEFT_PAREN, "("); break;
             	case ')': newToken = create_token(RIGHT_PAREN, ")"); break;
@@ -229,8 +230,8 @@ TokenNode* lexer(FILE* f){
 				buffer[i++] = c;
 				buffer[i] = '\0';
 			} else {
-				free_list(tokenQueue);
 				error(linenumber, "Buffer overflow, ce mot est trop long: %s...", buffer);
+				free_list(tokenQueue);
 				exit(EXIT_FAILURE);
 			}
 		}
@@ -239,11 +240,11 @@ TokenNode* lexer(FILE* f){
 	return tokenQueue;
 }
 
-int main(int argc, char** argv){
-	FILE* f = fopen(argv[1], "r");
-	TokenNode* tokenQueue = lexer(f);
-	fclose(f);
-	print_tokens(tokenQueue);
-	free_list(tokenQueue);
-	return 0;	
-}
+// int main(int argc, char** argv){
+// 	FILE* f = fopen(argv[1], "r");
+// 	TokenNode* tokenQueue = lexer(f);
+// 	fclose(f);
+// 	print_tokens(tokenQueue);
+// 	free_list(tokenQueue);
+// 	return 0;	
+// }
