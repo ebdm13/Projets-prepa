@@ -52,8 +52,8 @@ void free_AST(AST_node* root){
 void print_AST_node(AST_node* node, AST_node* root, int indent, bool sticks[100]){
 	if (indent >= 100) {
 		int linenumber = node->linenumber;
-		free_AST(root);
 		error(linenumber, "Arbre trop profond, il y a trop de noeuds enfants.");
+		free_AST(root);
 		exit(EXIT_FAILURE);
 	}
 
@@ -72,6 +72,7 @@ void print_AST_node(AST_node* node, AST_node* root, int indent, bool sticks[100]
 	if (node->token->type != BOT){
 		if (node->next_sibling != NULL){
 			printf("├── ");
+			sticks[indent] = true;
 		} else {
 			printf("└── ");
 			sticks[indent] = false;

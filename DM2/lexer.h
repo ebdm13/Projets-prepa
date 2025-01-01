@@ -10,6 +10,9 @@ bool isCommand(char* s);
 /*Vérifie si s est une pause*/
 bool isRest(char* s);
 
+/*Vérifie si s est une note (hauteur, altération, octave, durée)*/
+bool isNote(char* s);
+
 /*Vérifie si s est un nombre*/
 bool isNumber(char* s);
 

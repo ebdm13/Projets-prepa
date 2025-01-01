@@ -32,6 +32,17 @@ TokenNode* add_token(TokenNode *head, Token* token, int linenumber){
 	return new_node;
 }
 
+TokenNode* insert_token(TokenNode* head, Token* token, int linenumber){
+	assert(head != NULL);
+	assert(token != NULL);
+	TokenNode* new_node = malloc(sizeof(TokenNode));	
+	new_node->token = token;
+	new_node->linenumber = linenumber;
+	new_node->next = head->next;
+	head->next = new_node;
+	return new_node;
+}
+
 void free_list(TokenNode* queue){
 	assert(queue != NULL);
 	TokenNode* current = queue;
@@ -95,16 +106,14 @@ char* type_name_map[] = {
 	"VAR_NAME",
 	"VAR_CALL",
 	"REST",
-	// a b c d e f g
 	"NOTE",
+	// a b c d e f g
+	"NOTE_NAME",
 	// 1 2 4 8 16 32 64
 	"DUREE",
 	// is es ih eh
 	"ACCIDENTAL",
-	// '
-	"OCTAVE_UP",
-	// ,
-	"OCTAVE_DOWN",
+	"OCTAVE",
 	// ~
 	"TIE",
 	// .
@@ -178,6 +187,7 @@ void print_tokens(TokenNode *queue){
 	assert(queue != NULL);
 	TokenNode* node = queue;
 	while (node->next != NULL){
+		printf("l:%d ", node->linenumber);
 		print_token(node->token);
 		node = node->next;
 	}

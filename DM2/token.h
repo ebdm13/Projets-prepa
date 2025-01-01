@@ -50,16 +50,14 @@ typedef enum {
 	VAR_NAME,
 	VAR_CALL,
 	REST,
-	// a b c d e f g
 	NOTE,
+	// a b c d e f g
+	NOTE_NAME,
 	// 1 2 4 8 16 32 64
 	DUREE,
 	// is es ih eh
 	ACCIDENTAL,
-	// '
-	OCTAVE_UP,
-	// ,
-	OCTAVE_DOWN,
+	OCTAVE,
 	// ~
 	TIE,
 	// .
@@ -114,6 +112,9 @@ Token* create_token(TokenType type, char* lexem);
 
 /*Ajoute le token à la liste en le reliant à head en renvoi un pointeur vers la nouvelle head*/
 TokenNode* add_token(TokenNode* head, Token* token, int linenumber);
+
+/*Insert token entre head et head->next. Puis retourne le pointeur vers le nouveau noeud.*/
+TokenNode* insert_token(TokenNode* head, Token* token, int linenumber);
 
 /*Renvoie le type du token en str*/
 char* get_type(Token* token);

@@ -31,6 +31,24 @@ bool isRest(char* s){
 	return false;
 }
 
+bool isNote(char* s){
+	assert(s != NULL);
+	if (s[0] >= 'a' && s[0] <= 'g'){
+		int i = 1;
+		if ((s[1] == 'i' || s[1] == 'e') && s[2] == 's') {
+			if ((s[1] == 'i' && s[2] == 's' && s[3] == 'i' && s[4] == 's') || ( s[1] == 'e' && s[2] == 's' && s[3] == 'e' && s[4] == 's')) {
+				i = 5;
+			} else {i=3;}
+		} 
+		while (s[i] == '\''  || s[i] == ',') i++;
+		if ((s[i] == '6' && s[i+1] == '4') || (s[i] == '3' && s[i+1] == '2') || (s[i] == '1' && s[i+1] == '6')) {
+			i = i + 2;
+		} else if (s[i] == '1' || s[i] == '2' || s[i] == '4' || s[i] == '8') i++;
+		return s[i] == '\0';
+	}
+	return false;
+}
+
 bool isNumber(char* s){
 	assert(s != NULL);
 	for (int i = 0; s[i] != '\0'; i++){
@@ -149,6 +167,7 @@ Token* get_token(char* buffer){
 	if (isCommand(buffer)) return get_command(buffer);
 	if (isRest(buffer)) return get_rest(buffer);
 	if (isNumber(buffer)) return create_token(NUMBER, buffer);
+	if (isNote(buffer)) return create_token(NOTE, buffer);
 	return create_token(IDENTIFIER, buffer);
 }
 
@@ -172,10 +191,7 @@ TokenNode* lexer(FILE* f){
 	int a = 0;
 	while (a != EOF){
 		a = fscanf(f, "%c", &c);
-		if (c == ' ' || c == '\t' || c == '\v') {
-			endOfWord = true;
-		} else if (c == '\n') {
-			linenumber++;
+		if (c == ' ' || c == '\t' || c == '\v' || c == '\n') {
 			endOfWord = true;
 		} else if (c == '%'){
 			a = skip_comment(f, &linenumber, tokenQueue);
@@ -208,7 +224,7 @@ TokenNode* lexer(FILE* f){
 			if (strlen(buffer) != 0) {
 				head = add_token(head, get_token(buffer), linenumber);
 			}
-
+			if (c == '\n') linenumber++;
 			endOfWord = false;
 			i = 0;
 			buffer[0] = '\0';

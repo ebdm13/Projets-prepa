@@ -2,6 +2,7 @@
 #include "lexer.h"	
 #include "AST.h"
 #include "error.h"
+#include <float.h>
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
@@ -15,7 +16,21 @@ char* concat(char* s1, char* s2){
 	return s;
 }
 
+char* slice(char* s, int begin, int end){
+	assert(s != NULL);
+	assert((int)strlen(s) >= end);
+	assert(end >= begin);
+	char* s2 = malloc(end - begin + 1);
+	for (int i = begin; i < end; i++){
+		s2[i - begin] = s[i];
+	}
+	s2[end - begin] = '\0';
+	return s2;
+}
+
 void clean_exit(TokenNode *TokenQueue, AST_node *root){
+	assert(TokenQueue != NULL);
+	assert(root != NULL);
 	free_list(TokenQueue);
 	free_AST(root);	
 	exit(EXIT_FAILURE);
@@ -53,10 +68,11 @@ bool is_var(TokenNode* head, TokenNode* TokenQueue, AST_node* root){
 }
 
 // liste des fonction pour ajouter une command à l'AST
-add_command_t add_command_map[] = {add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown};
+add_command_t add_command_map[] = {add_unknown, add_unknown, add_unknown, add_relative, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown, add_unknown};
 
 TokenNode* add_context_element(TokenNode* head, AST_node* node, AST_node* root, TokenNode* TokenQueue){
 	assert(head != NULL);
+	assert(head->token->lexem != NULL);
 	assert(node != NULL);
 	if (head->token->type == EOT) {
 		error(node->linenumber, "'}' manquant, ou valeur non définie: %s", node->token->lexem);
@@ -65,6 +81,9 @@ TokenNode* add_context_element(TokenNode* head, AST_node* node, AST_node* root, 
 	if (is_type_command(head->token)){
 		add_command_t add_command = add_command_map[head->token->type];
 		return add_command(head, node, TokenQueue, root);
+	}
+	if (head->token->type == NOTE){
+		return add_note(head, node);
 	}
 	add_child(node, create_node(head));
 	return head->next;
@@ -126,6 +145,7 @@ TokenNode* ignore_command(TokenNode* head, TokenNode *TokenQueue, AST_node *root
 		error(head->linenumber, "'}' manquante");
 		clean_exit(TokenQueue, root);
 	}
+
 	return node;
 }
 
@@ -137,6 +157,80 @@ TokenNode* add_unknown(TokenNode* head, AST_node* node, TokenNode *TokenQueue, A
 	}
 	warning(head->linenumber, "Cette commande n'existe pas, fait référence à une commande non-définie ou n'a pas encore été implémentée: %s", head->token->lexem);
 	return ignore_command(head, TokenQueue, root);
+}
+
+TokenNode* add_note(TokenNode* head, AST_node* node){
+	assert(head != NULL);
+ 	assert(node != NULL);
+ 	assert(head->token->lexem != NULL);
+ 	char* lexem = head->token->lexem;
+ 	int len = strlen(lexem);
+ 	int linenumber = head->linenumber;
+ 	AST_node* note = create_node(head);
+ 	add_child(node, note);
+ 	Token* note_name_token = create_token(NOTE_NAME, slice(lexem, 0, 1));
+ 	head = insert_token(head, note_name_token, linenumber);
+ 	add_child(note, create_node(head));
+ 	int i = 1;
+ 	if (len >= 5) {
+ 		char* four = slice(lexem, 1, 5);
+ 		if (strcmp(four, "isis") == 0 || strcmp(four, "eses") == 0) {
+ 			Token* accidental = create_token(ACCIDENTAL, four);
+ 			head = insert_token(head, accidental, linenumber);
+ 			add_child(note, create_node(head));
+ 			i = 5;
+ 		} else {free(four);}
+ 	} else if (len >= 3) {
+ 		char* two = slice(lexem, 1, 3);
+ 		if (strcmp(two, "is") == 0 || strcmp(two, "es") == 0) {
+ 			Token* accidental = create_token(ACCIDENTAL, two);
+ 			head = insert_token(head, accidental, linenumber);
+ 			add_child(note, create_node(head));
+ 			i = 3;
+ 		} else {free(two);}
+ 	}
+ 	int j = i;
+	while (lexem[j] != '\0' && (lexem[j] == '\'' || lexem[j] == ',')) j++;
+	if (j - i != 0) {
+		Token* octave = create_token(OCTAVE, slice(lexem, i, j));
+		head = insert_token(head, octave, linenumber);
+		add_child(note, create_node(head));
+	}
+	if (len - j - 1 > 0){
+		Token* duree = create_token(DUREE, slice(lexem, j, len));
+		head = insert_token(head, duree, linenumber);
+		add_child(note, create_node(head));
+	}
+ 	return head->next;
+}
+
+TokenNode* add_relative(TokenNode* head, AST_node* node, TokenNode* TokenQueue,AST_node* root){
+	assert(head != NULL);
+	assert(node != NULL);
+	AST_node* relative = create_node(head);
+	head = head->next;
+	if (head->token->type == NOTE){
+		head = add_note(head, relative);
+		if (head->token->type == LEFT_BRACE){
+			head = head->next;
+			while (head->token->type != RIGHT_BRACE){
+				if (is_var(head, TokenQueue, root)){
+					head = add_var(head, relative, root, TokenQueue);
+				} else {
+					head = add_context_element(head, relative, root, TokenQueue);
+				}
+			}
+			add_child(node, relative);
+			return head->next;
+		} else {
+			error(relative->linenumber, "'{' manquante avant: %s", head->token->lexem);
+			clean_exit(TokenQueue, root);
+		}
+	} else {
+		error(relative->linenumber, "\\relative doit être suivit d'une note");
+		clean_exit(TokenQueue, root);
+	}
+	return NULL;
 }
 
 AST_node* parse(TokenNode* TokenQueue){
