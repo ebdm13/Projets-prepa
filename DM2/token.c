@@ -193,15 +193,3 @@ void print_tokens(TokenNode *queue){
 	}
 	print_token(node->token);
 }
-
-void test_token(){
-	TokenNode* queu = malloc(sizeof(TokenNode));
-	queu->token = create_token(BOT, "");
-	queu->next = NULL;
-	TokenNode* head = add_token(queu, create_token(NUMBER, "45"), 0);
-	head = add_token(head, create_token(EQUAL, "="), 0);
-	head = add_token(head, create_token(NUMBER, "45"), 0);
-	head = add_token(head, create_token(EOT, ""), 0);
-	print_tokens(queu);
-	free_list(queu);
-}

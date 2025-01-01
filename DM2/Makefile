@@ -7,3 +7,5 @@ compile:
 
 debug2:
 	gcc -Wall -Wextra -pedantic -g -O0 -o compiler token.c lexer.c error.c AST.c parser.c
+test:
+	gcc -o tests error.c token.c AST.c lexer.c parser.c TEST/main.c TEST/test_lexer.c TEST/test_parser.c TEST/test_AST.c TEST/test_token.c -Wall -Wextra

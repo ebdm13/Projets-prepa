@@ -251,13 +251,13 @@ AST_node* parse(TokenNode* TokenQueue){
 	return root;	
 }
 
-int main(int argc, char** argv){
-	FILE* f = fopen(argv[1], "r");
-	TokenNode* tokenQueue = lexer(f);
-	fclose(f);
-	AST_node* root = parse(tokenQueue);
-	print_AST(root);
-	free_list(tokenQueue);
-	free_AST(root);
-	return 0;	
-}
+// int main(int argc, char** argv){
+// 	FILE* f = fopen(argv[1], "r");
+// 	TokenNode* tokenQueue = lexer(f);
+// 	fclose(f);
+// 	AST_node* root = parse(tokenQueue);
+// 	print_AST(root);
+// 	free_list(tokenQueue);
+// 	free_AST(root);
+// 	return 0;	
+// }

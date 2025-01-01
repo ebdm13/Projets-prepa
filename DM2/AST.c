@@ -99,30 +99,3 @@ void print_AST(AST_node *root){
 	}
 	print_AST_node(root, root,0, sticks);
 }
-
-void test_AST(){
-	AST_node* root = create_AST_node(create_token(BOT, ""), 0);
-	AST_node* relative = create_AST_node(create_token(COMMAND_RELATIVE, "\\relative"), 0);
-	AST_node* relative_note = create_AST_node(create_token(NOTE, "c''"), 0);
-	AST_node* key = create_AST_node(create_token(COMMAND_KEY, "\\key"), 0);
-	AST_node* key_note = create_AST_node(create_token(NOTE, "a"), 0);
-	AST_node* note_1 = create_AST_node(create_token(NOTE, "a4"), 0);
-	AST_node* note_2 = create_AST_node(create_token(NOTE, "c2"), 0);
-	AST_node* note_3 = create_AST_node(create_token(NOTE, "f'"), 0);
-	AST_node* duree = create_AST_node(create_token(DUREE, "4"), 0);
-	add_child(root, relative);
-	add_child(relative, relative_note);
-	add_child(relative, key);
-	add_child(key, key_note);
-	add_child(relative, note_1);
-	add_child(relative, note_2);
-	add_child(relative, note_3);
-	add_child(note_3, duree);
-
-	print_AST(root);
-	AST_node* nodes[] = {root, relative, relative_note, key, key_note, note_1, note_2, note_3, duree};
-	for (int i = 0; i < 9; i++){
-		free_token(nodes[i]->token);
-	}
-	free_AST(root);
-}

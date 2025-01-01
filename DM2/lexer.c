@@ -102,6 +102,11 @@ Token* get_string(FILE* f, int linenumber, TokenNode* queue){
 			free_list(queue);
 			exit(EXIT_FAILURE);
 		}
+		if (i >= 1024){
+			error(linenumber, "Buffer Overflow, \" manquant ou string trop grande");
+			free_list(queue);
+			exit(EXIT_FAILURE);
+		}
 		string[i++] = c;
 		a = fscanf(f, "%c", &c);
 	}
