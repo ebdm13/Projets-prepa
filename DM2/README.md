@@ -43,5 +43,5 @@ Des fichiers de test sont disponibles dans le dossier `Partitions`. **Attention*
 
 ## **Structure des Dossiers**
 - **`Partitions/`** : Contient les fichiers de test au format LilyPond.
-- **`TEST/`** : Contient les fichiers de test unitaires pour le lexer, le parser, l'AST, etc.
-- **`src/`** : Contient les fichiers source principaux du compilateur.
+- **`src/`** : Contient le code.
+- **`src/TEST/`** : Contient les fichiers de test pour le compilateur.
