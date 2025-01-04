@@ -1,10 +1,8 @@
-*
-!*.*
 *.aux
 *.log
 *.out
 *.synctex.gz
+*.synctex.gz.sum.synctex
 *.wav
-DM2.pdf
-archive/
 plotwav.py
+Partitions/
