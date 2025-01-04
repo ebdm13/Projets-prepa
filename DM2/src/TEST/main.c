@@ -4,6 +4,7 @@ void test_token();
 void test_AST();
 void main_test_lexer();
 void test_parser();
+void test_renderer();
 
 int main() {
     printf("========== Début des tests ==========\n");
@@ -19,6 +20,9 @@ int main() {
 
     printf("\n[Module] Tests de parser.c\n");
     test_parser();
+
+    printf("\n[Module] Tests de renderer.c\n");
+    test_renderer();
 
     printf("\n========== Tous les tests sont terminés ==========\n");
     return 0;

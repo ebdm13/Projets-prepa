@@ -67,6 +67,7 @@ bool isNumber(char* s){
 
 int skip_comment(FILE* f, int* linenumber, TokenNode* queu){
 	assert(linenumber != NULL);
+	assert(queu != NULL);
 	if (f == NULL) {
 		error(*linenumber, "Fichier invalide");
 		free_list(queu);

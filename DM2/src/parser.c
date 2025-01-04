@@ -99,12 +99,9 @@ bool is_var_defined(AST_node *parent, char* name){
 	while (parent != NULL){
 		for (AST_node* child = parent->first_child; child != NULL; child=child->next_sibling){
 			if (child->token->type == VAR_NAME) {
-				char* var_call = concat("\\", child->token->lexem);
-				if (strcmp(var_call, name) == 0 && child->first_child != NULL){
-					free(var_call);
+				if (strcmp(child->token->lexem, name + 1) == 0 && child->first_child != NULL){
 					return true;
 				}
-				free(var_call);
 			}
 		}
 		parent = parent->parent;
@@ -150,6 +147,7 @@ TokenNode* add_unknown(TokenNode* head, AST_node* node, TokenNode *TokenQueue, A
 TokenNode* add_note(TokenNode* head, AST_node* node){
 	assert(head != NULL);
  	assert(node != NULL);
+ 	assert(head->token->type == NOTE);
  	assert(head->token->lexem != NULL);
  	char* lexem = head->token->lexem;
  	int len = strlen(lexem);

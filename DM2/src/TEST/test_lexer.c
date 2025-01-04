@@ -4,58 +4,68 @@
 #include <string.h>
 #include "../lexer.h"
 #include "../token.h"
+#include "../error.h"
 
 void test_isCommand() {
     printf("[Test] Test de isCommand:\n");
 
     assert(isCommand("\\command"));
     assert(!isCommand("not_a_command"));
+    assert(isCommand("\\<"));
+    assert(!isCommand("\\Command"));
 
-    printf("\t[OK] isCommand a passé les tests.\n");
+    info(0, "\t[✓] isCOmmand a passé le test.\n");
 }
 
 void test_isRest() {
     printf("[Test] Test de isRest:\n");
 
     assert(isRest("r1"));
+    assert(isRest("r32"));
     assert(!isRest("note"));
 
-    printf("\t[OK] isRest a passé les tests.\n");
+    info(0, "\t[✓] isRest a passé le test.\n");
 }
 
 void test_isNote() {
     printf("[Test] Test de isNote:\n");
 
-    assert(isNote("c'4"));
-    assert(!isNote("random"));
+    assert(isNote("bis'16"));
+    assert(isNote("ceses,,,4"));
+    assert(isNote("c"));
+    assert(isNote("g''"));
+    assert(isNote("g32"));
+    assert(isNote("g,,8"));
+    assert(!isNote("r"));
 
-    printf("\t[OK] isNote a passé les tests.\n");
+    info(0, "\t[✓] isNote a passé le test.\n");
 }
 
 void test_isNumber() {
     printf("[Test] Test de isNumber:\n");
 
     assert(isNumber("123"));
-    assert(!isNumber("abc"));
+    assert(!isNumber("12.5"));
 
-    printf("\t[OK] isNumber a passé les tests.\n");
+    info(0, "\t[✓] isNumber a passé le test.\n");
 }
 
 void test_skip_comment() {
     printf("[Test] Test de skip_comment:\n");
     // Test 1: Commentaire en bloc
     {
-        const char* test_string = "{ This is a block comment %}";
+        char* test_string = "{ This is \n a \n block \n comment %}";
         FILE* f = fopen("test_file1.txt", "w+");
         fprintf(f, "%s", test_string);
         rewind(f);
         int linenumber = 1;
-        TokenNode* queu = NULL; // Initialisez selon vos besoins
+        TokenNode* queu = malloc(sizeof(TokenNode));
         int result = skip_comment(f, &linenumber, queu);
         fclose(f);
         remove("test_file1.txt");
+        free(queu);
         assert(result != EOF);
-        assert(linenumber == 1);
+        assert(linenumber == 4);
     }
 
     // Test 2: Commentaire en ligne
@@ -65,14 +75,15 @@ void test_skip_comment() {
         fprintf(f, "%s", test_string);
         rewind(f);
         int linenumber = 1;
-        TokenNode* queu = NULL; // Initialisez selon vos besoins
+        TokenNode* queu = malloc(sizeof(TokenNode));
         int result = skip_comment(f, &linenumber, queu);
         fclose(f);
+        free(queu);
         remove("test_file2.txt");
         assert(result != EOF);
         assert(linenumber == 2);
     } 
-    printf("\t[OK] skip_comment a passé le test.\n");
+    info(0, "\t[✓] skip_comment a passé le test.\n");
 }
 
 void test_get_string() {
@@ -91,7 +102,8 @@ void test_get_string() {
     assert(strcmp(result->lexem, "\"This is a valid string\"") == 0);
     free_token(result);
     free(queue);
-    printf("\t[OK] get_string a passé le test.\n");
+
+    info(0, "\t[✓] get_string a passé le test.\n");
 }
 
 void test_lexer() {
@@ -108,7 +120,7 @@ void test_lexer() {
     print_tokens(queue);
     free_list(queue);
 
-    printf("\t[OK] lexer a passé le test.\n");
+    info(0, "\t[✓] lexer a passé le test.\n");
 }
 
 void main_test_lexer() {
@@ -120,5 +132,5 @@ void main_test_lexer() {
     test_get_string();
     test_lexer();
 
-    printf("\nTous les tests du lexer sont terminés avec succès.\n");
+    info(0, "\nTous les tests du lexer sont terminés avec succès.\n");
 }

@@ -3,11 +3,12 @@
 #include <stdio.h>
 #include "../AST.h"
 #include "../token.h"
+#include "../error.h"
 
 void test_create_AST_node() {
     printf("[Test] Test de create_AST_node:\n");
 
-    Token* token = create_token(NOTE, "c'4");
+    Token* token = create_token(NOTE, "c'16");
     AST_node* node = create_AST_node(token, 1);
 
     assert(node != NULL);
@@ -19,15 +20,20 @@ void test_create_AST_node() {
 
     free_token(token);
     free(node);
-    printf("\t[OK] create_AST_node a passé le test.\n");
+    info(0, "\t[✓] create_AST_node a passé le test.\n");
 }
 
 void test_add_child() {
     printf("[Test] Test de add_child:\n");
-
-    AST_node* parent = create_AST_node(create_token(COMMAND_RELATIVE, "\\relative"), 1);
-    AST_node* child1 = create_AST_node(create_token(NOTE, "c'4"), 1);
-    AST_node* child2 = create_AST_node(create_token(NOTE, "d'4"), 1);
+    TokenNode* queue = malloc(sizeof(TokenNode));
+    queue->token = create_token(COMMAND_RELATIVE, "\\relative");
+    queue->linenumber = 1;
+    queue->next = NULL;
+    add_token(queue, create_token(NOTE, "c'4"), 1);
+    add_token(queue->next, create_token(NOTE, "d'4"), 1);
+    AST_node* parent = create_node(queue);
+    AST_node* child1 = create_node(queue->next);
+    AST_node* child2 = create_node(queue->next->next);
 
     add_child(parent, child1);
     add_child(parent, child2);
@@ -38,45 +44,38 @@ void test_add_child() {
     assert(child1->parent == parent);
     assert(child2->parent == parent);
 
+    free_list(queue);
     free_AST(parent);
-    printf("\t[OK] add_child a passé le test.\n");
-}
+    info(0, "\t[✓] add_child a passé le test.\n");
 
-void test_free_AST() {
-    printf("[Test] Test de free_AST:\n");
-
-    AST_node* root = create_AST_node(create_token(BOT, ""), 0);
-    AST_node* child1 = create_AST_node(create_token(NOTE, "c'4"), 1);
-    AST_node* child2 = create_AST_node(create_token(NOTE, "d'4"), 1);
-    add_child(root, child1);
-    add_child(root, child2);
-
-    free_AST(root);
-
-    printf("\t[OK] free_AST a libéré la mémoire sans fuite.\n");
 }
 
 void test_print_AST() {
     printf("[Test] Test de print_AST:\n");
 
-    AST_node* root = create_AST_node(create_token(BOT, ""), 0);
-    AST_node* relative = create_AST_node(create_token(COMMAND_RELATIVE, "\\relative"), 1);
-    AST_node* note = create_AST_node(create_token(NOTE, "c'4"), 1);
+    TokenNode* queue = malloc(sizeof(TokenNode));
+    queue->token = create_token(BOT, "");
+    queue->linenumber = 0;
+    queue->next = NULL;
+    TokenNode* head = add_token(queue, create_token(COMMAND_RELATIVE, "\\relative"), 1);
+    add_token(head, create_token(NOTE, "c'4"), 1);
+    AST_node* root = create_node(queue);
 
-    add_child(root, relative);
-    add_child(relative, note);
+    add_child(root, create_node(queue->next));
+    add_child(root->first_child, create_node(head));
 
     print_AST(root);
 
+    free_list(queue);
     free_AST(root);
-    printf("\t[OK] print_AST a affiché l'arbre avec succès.\n");
+    info(0, "\t[✓] print_AST a passé le test.\n");
+
 }
 
 void test_AST() {
     test_create_AST_node();
     test_add_child();
-    test_free_AST();
     test_print_AST();
 
-    printf("\nTous les tests de l'AST sont terminés avec succès.\n");
+    info(0, "\nTous les tests de l'AST sont terminés avec succès.\n");
 }
