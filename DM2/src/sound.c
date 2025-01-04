@@ -25,6 +25,7 @@ void free_mix(mix_t* m){
 }
 
 sound_t* reduce_track(track_t *t){
+	assert(t != NULL);
 	sound_t* s = malloc(sizeof(sound_t));
 	s->n_samples = 0;
 	for (int i = 0; i < t->n_sounds; i++){
@@ -43,34 +44,34 @@ sound_t* reduce_track(track_t *t){
 }
 
 sound_t* reduce_mix(mix_t* m){
-	assert((m != NULL) & (m->n_track != 0) && (m->tracks != NULL) & (m->vols != NULL));
-	sound_t* s = malloc(sizeof(sound_t));
+	assert((m != NULL) && (m->n_track != 0) && (m->tracks != NULL) && (m->vols != NULL));
 	sound_t* s_temp;
 	int n = 0;
-	int* samples_sum = calloc(n, sizeof(int));
-
+	int max_samples = 0;
+	for (int i = 0; i < m->n_track; i++){
+		n = 0;
+		for (int j = 0; j < m->tracks[i]->n_sounds; j++) {
+			n += m->tracks[i]->sounds[j]->n_samples;
+		}
+		if (n > max_samples){
+			max_samples = n;
+		}
+	}
+	int* samples_sum = calloc(max_samples, sizeof(int));
 	for (int i = 0; i < m->n_track; i++){
 		s_temp = reduce_track(m->tracks[i]);
-		if (s_temp->n_samples > n){
-			samples_sum = realloc(samples_sum, s_temp->n_samples * sizeof(int));
-			for (int k = n; k < s_temp->n_samples; k++){
-				samples_sum[k] = 0;	
-			}
-			n = s_temp->n_samples;
-		}
 		for (int j = 0; j < s_temp->n_samples;j++){
 			samples_sum[j] += s_temp->samples[j] * m->vols[i];
 		}
 		free_sound(s_temp);
 	}
-	for (int p = 0; p < n; p++){
-		samples_sum[p] /= m->n_track;
-	}
-	s->n_samples = n;
-	s->samples = malloc(n * sizeof(int16_t));
-	for (int i = 0; i < n; i++){
-		s->samples[i] = (int16_t)samples_sum[i];
+
+	sound_t* result = malloc(sizeof(sound_t));
+	result->n_samples = max_samples;
+	result->samples = malloc(max_samples * sizeof(int16_t));
+	for (int i = 0; i < max_samples; i++){
+		result->samples[i] = (int16_t)(samples_sum[i] / m->n_track);
 	}
 	free(samples_sum);
-	return s;
+	return result;
 }

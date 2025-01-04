@@ -87,9 +87,7 @@
     \vspace{5pt} % Whitespace
 }
 
-\author{Élie Bellot des Minières} % Your name
-
-\date{\normalsize{06 octobre 2024}} % Today's date (\today) or a custom date
+\date{\normalsize{03 janvier 2025}} % Today's date (\today) or a custom date
 
 \begin{document}
 \maketitle % Print the title
@@ -105,4 +103,69 @@ Pour $i$, l'indice de l'échantillon, sa valeur est $U(i\tau_{ech})$. Or, pour $
     02 00 10 00 64 61 74 61 0a 00 00 00 d2 03 5e 06
     ff ff a2 f9 ff 7f 
 \end{lstlisting}
+
+\subsection*{Question 18}
+On note $n$ le nombre de pistes et $l_1, \ldots, l_n$ le nombre d'échantillons total de chaque piste.
+Tout d'abord, déterminons la complexité de \texttt{reduce\_track}.
+Toutes les opérations hormis les boucles sont en $O(1)$.
+
+Première boucle :
+
+\begin{lstlisting}
+    for (int i = 0; i < t->n_sounds; i++){
+        s->n_samples += t->sounds[i]->n_samples;
+    }
+\end{lstlisting}
+
+Deuxième boucle :
+
+\begin{lstlisting}
+    for (int i = 0; i < t->n_sounds; i++){
+        for (int j = 0; j < t->sounds[i]->n_samples; j++){
+            samples[n] = t->sounds[i]->samples[j];
+            n++;
+        }
+    }
+\end{lstlisting}
+
+On observe que la première boucle est un grand $O$ de la deuxième puisque cette dernière possède une sous-boucle que la première n'a pas. Or, la deuxième boucle parcourt tous les échantillons de la piste. Elle est donc en $O(l_k)$.
+La complexité de \texttt{reduce\_track} est donc aussi $O(l_k)$.
+
+Pour ce qui est de \texttt{reduce\_mix} :
+
+Première boucle :
+
+\begin{lstlisting}
+    for (int i = 0; i < m->n_track; i++){
+        n = 0;
+        for (int j = 0; j < m->tracks[i]->n_sounds; j++) {
+            n += m->tracks[i]->sounds[j]->n_samples;
+        }
+        if (n > max_samples){
+            max_samples = n;
+        }
+    }
+\end{lstlisting}
+
+Elle parcourt tous les sons de chaque piste.
+
+\begin{lstlisting}
+    int* samples_sum = calloc(max_samples, sizeof(int));
+\end{lstlisting}
+
+Est un grand $O$ de \texttt{max\_samples} qui est évidemment un grand $O$ de la première boucle.
+
+Deuxième boucle :
+
+\begin{lstlisting}
+    for (int i = 0; i < m->n_track; i++){
+        s_temp = reduce_track(m->tracks[i]);
+        for (int j = 0; j < s_temp->n_samples; j++){
+            samples_sum[j] += s_temp->samples[j] * m->vols[i];
+        }
+        free_sound(s_temp);
+    }
+\end{lstlisting}
+
+On rappelle que \texttt{reduce\_track} est un grand $O$ de $l_k$. Et, la sous-boucle parcourt tous les échantillons de la piste. Elle est donc aussi un grand $O$ de $l_k$. La boucle extérieure parcourt toutes les $n$ pistes. Donc l'ensemble est de complexité : $O(l_1 + \ldots + l_n)$. On note que la première boucle de la fonction parcourt moins d'éléments que la deuxième. Donc, est aussi un grand $O$ de $l_1 + \ldots + l_n$. Pour finir, la dernière boucle est un grand $O$ de \texttt{max\_samples}, donc aussi de $l_1 + \ldots + l_n$. Au final, \texttt{reduce\_mix} est de complexité : $O(l_1 + \ldots + l_n)$.
 \end{document}
