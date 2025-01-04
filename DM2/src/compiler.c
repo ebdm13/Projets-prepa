@@ -17,22 +17,22 @@ int main(int argc, char** argv){
     TokenNode* tokenQueue = lexer(f);
     end = clock();
     cpu_time_used = ((double) (end - start1)) / CLOCKS_PER_SEC;
-    printf("Lexer OK: %f seconds\n", cpu_time_used);
+    info(0, "[✓] Lexer: %f seconds\n", cpu_time_used);
 	fclose(f);
 	start = clock();
 	AST_node* root = parse(tokenQueue);
     end = clock();
     cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
-    printf("Parser OK: %f seconds\n", cpu_time_used);
+    info(0, "[✓] Parser: %f seconds\n", cpu_time_used);
 	start = clock();
 	track_t* track = render(root, 44100, 4, 120);
 	sound_t* sound = reduce_track(track);
 	save_sound(argv[2], sound);
     end = clock();
     cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
-    printf("Render OK: %f seconds\n", cpu_time_used);
+    info(0, "[✓] Render: %f seconds\n", cpu_time_used);
     cpu_time_used = ((double) (end - start1)) / CLOCKS_PER_SEC;
-    printf("Total: %f seconds\n", cpu_time_used);
+    info(0, "Total: %f seconds\n", cpu_time_used);
     if (argc == 4){
     	printf("\n");
     	if (strcmp(argv[3], "-p") == 0) {
