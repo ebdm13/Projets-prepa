@@ -1,0 +1,173 @@
+% My LaTeX template
+
+%----------------------------------------------------------------------------------------
+%    PACKAGES AND OTHER DOCUMENT CONFIGURATIONS
+%----------------------------------------------------------------------------------------
+
+\documentclass[11pt]{article} % Font size
+\usepackage{amsmath, amsfonts, amssymb, amsthm}
+\usepackage[french]{babel}
+\usepackage{blindtext}
+\usepackage{zref-totpages}
+\usepackage{siunitx}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+\lstset{style=mystyle,
+        inputencoding=utf8,
+        extendedchars=true,
+        literate=%
+        {é}{{\'{e}}}1}
+\usepackage{mathrsfs}
+
+\usepackage{titlesec}
+\titleformat{\subsection}[hang]{\bfseries}{\thesubsection}{1em}{}
+\titlespacing*{\subsection}{0pt}{3.5ex plus 1ex minus .2ex}{2.3ex plus .2ex}
+
+\usepackage[utf8]{inputenc} % Required for inputting international characters
+\usepackage[T1]{fontenc} % Use 8-bit encoding
+
+\usepackage{geometry} % Required for adjusting page dimensions and margins
+\geometry{
+    paper=a4paper, % Paper size, change to letterpaper for US letter size
+    top=2cm, % Top margin
+    bottom=2.5cm, % Bottom margin
+    left=2cm, % Left margin
+    right=2cm, % Right margin
+    headheight=0.75cm, % Header height
+    footskip=1cm, % Space from the bottom margin to the baseline of the footer
+    headsep=0.5cm, % Space from the top margin to the baseline of the header
+    % showframe, % Uncomment to show how the type block is set on the page
+}
+
+\hypersetup{colorlinks=true, urlcolor=blue}
+
+% \renewcommand{\thesection}{\Roman{section}}
+\renewcommand{\thesubsection}{\alph{subsection})}
+\newcommand{\ol}{\overline}
+\newcommand{\nbsp}{\nobreakspace}
+
+%------------------------------------------------------------------------------
+%    TITLE SECTION
+%------------------------------------------------------------------------------
+
+\title{
+    \vspace{10pt} % Whitespace
+    \rule{\linewidth}{1pt}\\ % Thin top horizontal rule
+    \vspace{10pt} % Whitespace
+    {\huge DM2}\\ % The assignment title
+    % \vspace{1pt} % Whitespace
+    \rule{\linewidth}{1pt}\\ % Thick bottom horizontal rule
+    \vspace{5pt} % Whitespace
+}
+
+\author{Élie Bellot des Minières} % Your name
+
+\date{\normalsize{06 octobre 2024}} % Today's date (\today) or a custom date
+
+\begin{document}
+\maketitle % Print the title
+\thispagestyle{empty}
+\section{Questions}
+\subsection*{Questions 1}
+Pour $i$, l'indice de l'échantillon, sa valeur est $U(i\tau_{ech})$. Or, pour $U(t) = U_0\sin 2\pi ft$, $U(i\tau_{ech}) = U_0\sin (2\pi fi\tau_{ech})$.
+
+\subsection*{Question 3}
+\begin{lstlisting}
+    52 49 46 46 2e 00 00 00 57 41 56 45 66 6d 74 20
+    10 00 00 00 01 00 01 00 22 56 00 00 44 ac 00 00
+    02 00 10 00 64 61 74 61 0a 00 00 00 d2 03 5e 06
+    ff ff a2 f9 ff 7f 
+\end{lstlisting}
+
+\subsection*{Question 18}
+On note $n$ le nombre de pistes et $l_1, \ldots, l_n$ le nombre d'échantillons total de chaque piste.
+Tout d'abord, déterminons la complexité de \texttt{reduce\_track}.
+Toutes les opérations hormis les boucles sont en $O(1)$.
+
+Première boucle :
+
+\begin{lstlisting}
+    for (int i = 0; i < t->n_sounds; i++){
+        s->n_samples += t->sounds[i]->n_samples;
+    }
+\end{lstlisting}
+
+Deuxième boucle :
+
+\begin{lstlisting}
+    for (int i = 0; i < t->n_sounds; i++){
+        for (int j = 0; j < t->sounds[i]->n_samples; j++){
+            samples[n] = t->sounds[i]->samples[j];
+            n++;
+        }
+    }
+\end{lstlisting}
+
+On observe que la première boucle est un grand $O$ de la deuxième puisque cette dernière possède une sous-boucle que la première n'a pas. Or, la deuxième boucle parcourt tous les échantillons de la piste. Elle est donc en $O(l_k)$.
+La complexité de \texttt{reduce\_track} est donc aussi $O(l_k)$.
+
+Pour ce qui est de \texttt{reduce\_mix} :
+
+Première boucle :
+
+\begin{lstlisting}
+    for (int i = 0; i < m->n_track; i++){
+        n = 0;
+        for (int j = 0; j < m->tracks[i]->n_sounds; j++) {
+            n += m->tracks[i]->sounds[j]->n_samples;
+        }
+        if (n > max_samples){
+            max_samples = n;
+        }
+    }
+\end{lstlisting}
+
+Elle parcourt tous les sons de chaque piste.
+
+\begin{lstlisting}
+    int* samples_sum = calloc(max_samples, sizeof(int));
+\end{lstlisting}
+
+Est un grand $O$ de \texttt{max\_samples} qui est évidemment un grand $O$ de la première boucle.
+
+Deuxième boucle :
+
+\begin{lstlisting}
+    for (int i = 0; i < m->n_track; i++){
+        s_temp = reduce_track(m->tracks[i]);
+        for (int j = 0; j < s_temp->n_samples; j++){
+            samples_sum[j] += s_temp->samples[j] * m->vols[i];
+        }
+        free_sound(s_temp);
+    }
+\end{lstlisting}
+
+On rappelle que \texttt{reduce\_track} est un grand $O$ de $l_k$. Et, la sous-boucle parcourt tous les échantillons de la piste. Elle est donc aussi un grand $O$ de $l_k$. La boucle extérieure parcourt toutes les $n$ pistes. Donc l'ensemble est de complexité : $O(l_1 + \ldots + l_n)$. On note que la première boucle de la fonction parcourt moins d'éléments que la deuxième. Donc, est aussi un grand $O$ de $l_1 + \ldots + l_n$. Pour finir, la dernière boucle est un grand $O$ de \texttt{max\_samples}, donc aussi de $l_1 + \ldots + l_n$. Au final, \texttt{reduce\_mix} est de complexité : $O(l_1 + \ldots + l_n)$.
+\end{document}

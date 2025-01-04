@@ -1,14 +1,8 @@
-*
-!*.*
-!*/
 *.aux
 *.log
 *.out
 *.synctex.gz
 *.wav
-*.ly
-*.pdf
 *.midi
-!reponses.pdf
-archive/
-plotwav.py
+!DM2/reponses.pdf
+DM2/plotwav.py
