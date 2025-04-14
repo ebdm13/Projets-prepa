@@ -5,6 +5,8 @@
 *.synctex.gz.sum.synctex
 *.wav
 *.midi
+*.cmi
+*.cmo
 !DM2/reponses.pdf
 DM2/plotwav.py
 DM2/Partitions/*.pdf
