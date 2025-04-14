@@ -146,6 +146,7 @@ Le module **error** gère l'affichage des erreurs et des avertissements rencontr
 #### Fonctions principales :
 - **`error(int linenumber, char* format, ...)`** : Affiche un message d'erreur en rouge avec le numéro de ligne correspondant.
 - **`warning(int linenumber, char* format, ...)`** : Affiche un message d'avertissement en orange avec le numéro de ligne correspondant.
+- **`info(int linenumber,char* format, ...)`** : Affiche un message d'informationen vert avec le numéro de la ligne correspondant.
 
 ---
 

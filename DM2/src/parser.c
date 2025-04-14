@@ -159,7 +159,12 @@ TokenNode* add_note(TokenNode* head, AST_node* node){
  	head = insert_token(head, note_name_token, linenumber);
  	add_child(note, create_node(head));
  	int i = 1;
-	if (len >= 5 && (strncmp(lexem + i , "isis", 4) == 0 || strncmp(lexem + i, "eses", 4) == 0)) {
+ 	if (lexem[i] == '!'){
+ 		Token* accidental_token = create_token(ACCIDENTAL, "!");
+		head = insert_token(head, accidental_token, linenumber);
+		add_child(note, create_node(head));
+		i++;
+ 	} else if (len >= 5 && (strncmp(lexem + i , "isis", 4) == 0 || strncmp(lexem + i, "eses", 4) == 0)) {
 		char accidental[5] = {lexem[i], lexem[i+1], lexem[i+2], lexem[i+3], '\0'};
 		Token* accidental_token = create_token(ACCIDENTAL, accidental);
 		head = insert_token(head, accidental_token, linenumber);
@@ -181,13 +186,29 @@ TokenNode* add_note(TokenNode* head, AST_node* node){
 		add_child(note, create_node(head));
 		free(octave);
 	}
-	if (len > j){
-		char* duree = strndup(lexem + j, len - j);
+	i = j;
+	if ((lexem[i] == '6' && lexem[i + 1] == '4') || 
+        (lexem[i] == '3' && lexem[i + 1] == '2') || 
+        (lexem[i] == '1' && lexem[i + 1] == '6')) {
+    	char duree[3] = {lexem[i], lexem[i+1], '\0'};
 		Token* duree_token = create_token(DUREE, duree);
 		head = insert_token(head, duree_token, linenumber);
 		add_child(note, create_node(head));
-		free(duree);
-	}
+        i += 2;
+
+    } else if (lexem[i] == '1' || lexem[i] == '2' || lexem[i] == '4' || lexem[i] == '8') {
+    	char duree[2] = {lexem[i], '\0'};
+		Token* duree_token = create_token(DUREE, duree);
+		head = insert_token(head, duree_token, linenumber);
+		add_child(note, create_node(head));
+        i++;
+    }
+    if (lexem[i] == '.') {
+		Token* dot_token = create_token(DOT, ".");
+		head = insert_token(head, dot_token, linenumber);
+		add_child(note, create_node(head));
+    }	
+	
  	return head->next;
 }
 
@@ -244,6 +265,7 @@ AST_node* parse(TokenNode* TokenQueue){
 					head = head->next;
 				} else {
 					warning(head->linenumber, "%s n'est pas une note ni un silence", head->token->lexem);
+					head = head-> next;
 				}
 			}
 			head = head->next;

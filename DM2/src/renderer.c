@@ -73,7 +73,7 @@ track_t* render(AST_node* root, int f_ech, int duree_ref, int bpm){
 	for (int i = 0; node != NULL; i++){
 		if (node->token->type == NOTE){
 			note_t* note = render_note(node);
-			track->sounds[i] = sine(pitch_to_freq(note->pitch), 1000, duree_to_second(note->duree, duree_ref, bpm), f_ech);
+			track->sounds[i] = sine(pitch_to_freq(note->pitch), 10000, duree_to_second(note->duree, duree_ref, bpm), f_ech);
 			free(note);
 		} else if (node->token->type == REST){
 			track->sounds[i] = sine(0, 0, duree_to_second(atoi(node->token->lexem + 1), duree_ref, bpm), f_ech);

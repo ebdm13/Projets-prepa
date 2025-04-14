@@ -26,6 +26,7 @@ bool isCommand(char* s){
 bool isRest(char* s){
 	assert(s != NULL);
 	int len = strlen(s);
+	if (s[0] == 'r' && s[1] == '\0') return true;
 	if (len == 2 && s[0] == 'r' && (s[1] == '1' || s[1] == '2' || s[1] == '4' || s[1] == '8')) return true;
 	if (strcmp(s, "r16") == 0 || strcmp(s, "r32") == 0 || strcmp(s, "r64") == 0) return true;
 	return false;
@@ -37,8 +38,9 @@ bool isNote(char* s){
         return false;
     }
     int i = 1;
-    
-    if (strncmp(s + i, "isis", 4) == 0 || strncmp(s + i, "eses", 4) == 0) {
+    if (s[i] == '!') {
+    	i++;
+    } else if (strncmp(s + i, "isis", 4) == 0 || strncmp(s + i, "eses", 4) == 0) {
         i += 4;
     } else if (strncmp(s + i, "is", 2) == 0 || strncmp(s + i, "es", 2) == 0) {
         i += 2;
@@ -53,6 +55,7 @@ bool isNote(char* s){
     } else if (s[i] == '1' || s[i] == '2' || s[i] == '4' || s[i] == '8') {
         i++;
     }
+    if (s[i] == '.') i++;
 
     return s[i] == '\0';
 }
@@ -214,7 +217,7 @@ TokenNode* lexer(FILE* f){
 		} else if (c == '%'){
 			a = skip_comment(f, &linenumber, tokenQueue);
 			endOfWord = true;
-		} else if (c == '"' || c == '(' || c == ')' || c == '#' || c == '}' || c == '{' || c == '\\' || c == '~' || c == '=' || c == '|') {
+		} else if (c == '"' || c == '(' || c == ')' || c == '#' || c == '}' || c == '{' || c == '\\' || c == '~' || c == '=' || c == '|' || c == '<' || c == '>') {
 			switch (c) {
 				case '"': newToken = get_string(f, linenumber, tokenQueue); break;
             	case '(': newToken = create_token(LEFT_PAREN, "("); break;
@@ -226,6 +229,8 @@ TokenNode* lexer(FILE* f){
             	case '\\': newToken = create_token(BACKSLASH, "\\"); break;
             	case '=': newToken = create_token(EQUAL, "="); break;
             	case '|': newToken = create_token(BARLINE, "|"); break;
+            	case '<': newToken = create_token(LEFT_ANGLE, "<"); break;
+            	case '>': newToken = create_token(RIGHT_ANGLE, ">"); break;
             	default: break;
             }
             endOfWord = true;
