@@ -57,7 +57,7 @@ let rec union (l1: 'a list) (l2: 'a list) : 'a list =
 	| l, [] | [], l -> l 
 	| x::q, y::p -> if x < y then x::(union q (y::p)) 
 						else if x > y then y::(union (x::q) p) 
-						else x::(union q p)
+						else x::(union q p
 
 (* Retourne la liste des variables de f *)
 let rec var_list (f: formule) : string list =
