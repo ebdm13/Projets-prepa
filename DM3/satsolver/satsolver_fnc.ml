@@ -2,16 +2,14 @@ open Parser
 open ARN
 open Dico
 
-(* #use "dico.ml"
-#use "parser.ml"
-#use "ARN.ml" *)
-
+(* Supprime v dans l'arn de dico à la clée k *)
 let del_arn (dico: ('k, 'v arn) dico) (k: 'k) (v: 'v) : ('k, 'v arn) dico =
 	match get dico k with
 	| None -> dico
 	| Some (Some (Feuille v')) when v' = v-> del dico k
 	| Some t -> set dico k (deleteARN v t)
 
+(* Insère v dans l'arn de dico à la clée k *)
 let set_arn (dico: ('k, 'v arn) dico) (k: 'k) (v: 'v) : ('k, 'v arn) dico =
 	match get dico k with
 	| None -> set dico k (Some (Feuille v))
@@ -59,10 +57,10 @@ let fnc_of_formule (f: formule) : fnc =
 
 (* On stocke les variables avec un triplet de dictionaire.
 le premier contentant toutes les variables est trié par nom de variable
-le second contient les variables dont la valuation n'est pas certaine trié par nombre d'occurence
+le second contient les variables dont la valuation n'est pas certaine; trié par nombre d'occurence
 (les valeurs sont des arn qui contiennent les variables de même occurence)
 le dernier contient les variables dont la valuation est certaine: càd qui apparait sous
-une seule forme (positive ou négatige) dans toutes la formule.
+une seule forme (positive ou négatige) dans toute la formule.
 (les valeurs sont des arn qui contiennent les variables de même occurence)
  *)
 type all_var = (string, int*int) dico
@@ -70,6 +68,7 @@ type uncertain_var = (int, (string*bool) arn) dico
 type certain_var = (int, (string*bool) arn) dico
 type variables = all_var * uncertain_var * certain_var
 
+(* Ajoute l dans d et met à jours le nombre d'occurence*)
 let add_var (d: all_var) (l: litteral) : all_var =
 	match l with
 	| Var x -> (match get d x with
@@ -79,12 +78,15 @@ let add_var (d: all_var) (l: litteral) : all_var =
 					   		| None -> set d x (0, 1)
 					   		| Some (pos, neg) -> set d x (pos, neg + 1)
 
+(* Ajoute les variables de c dans d *)
 let rec add_clause (c: clause) (d: all_var): all_var =
 	match c with
 	| None -> None
 	| Some (Feuille l) -> add_var d l
 	| Some (Noeud(_, _, c1, c2)) -> add_clause (Some c1) (add_clause (Some c2) d)
 
+(* Retourne le dictionaire contenant toutes les variables en clée
+et le nombre d'occurence positive / négative en clée *)
 let find_var (f: fnc) : all_var = 
 	let rec find_var_set (f: fnc) (d: all_var) : all_var =
 		match f with
@@ -92,6 +94,9 @@ let find_var (f: fnc) : all_var =
 		| c::f' -> find_var_set f' (add_clause c d)
 	in find_var_set f None
 
+(* Génère les des autres dictionaires: certain / uncertain _var à partir de all_var et renvoie 
+let triplet.
+*)
 let gen_var (d: all_var) : variables =
 	let rec gen_var_aux (v: variables) : uncertain_var * certain_var = 
 		let d1, d2, d3 = v in
@@ -105,16 +110,6 @@ let gen_var (d: all_var) : variables =
 	in let d2, d3 = gen_var_aux (d, None, None)
 	in d, d2, d3
 
-let print_bool (b: bool) : unit = 
-	match b with
-	| true -> print_string "1"
-	| false -> print_string "0"
-
-let rec print_valuation (v: valuation) : unit =
-	match v with
-	| [] -> ()
-	| (x, b)::q -> print_string "(" ; print_string x ; print_string ", " ; print_bool b ; print_string "); " ; print_valuation q
-
 let is_pos (l: litteral) : bool =
 	match l with
 	| Var x -> true
@@ -123,25 +118,6 @@ let is_pos (l: litteral) : bool =
 let str_of_lit (l: litteral) : string = 
 	match l with
 	| Var x | NotVar x -> x
-
-(* 1. Récupère toutes les feuilles d'un ARN de (string*bool) *)
-let rec feuilles_arn (t: 'a arn) : 'a list =
-	match t with
-  | None -> []
-  | Some (Feuille x) -> [x]
-  | Some (Noeud (_, _, g, d)) ->
-      (* Parcours infixe : gauche, nœud, droite *)
-      feuilles_arn (Some g)
-      @ feuilles_arn (Some d)
-
-(* 2. Extrait la valuation d'un dico (int -> (string*bool) arn) *)
-let rec valuation_of_dic (d : (int, (string*bool) arn) dico) : (string * bool) list =
-	match d with
-    | None -> []
-    | Some (Feuille (_, arn)) ->
-        feuilles_arn arn
-    | Some (Noeud (_, _, left, right)) ->
-        valuation_of_dic (Some left) @ valuation_of_dic (Some right)
 
 (* supprime une occurence de l dans vars*)
 let update_var_from_litteral (l: litteral) (vars: variables) : variables =
@@ -164,11 +140,6 @@ let update_var_from_litteral (l: litteral) (vars: variables) : variables =
 				 | Some (0, neg) -> set d1 x (0, neg-1), d2, set_arn (del_arn d3 neg (x, false)) (neg-1) (x, false)
 				 | Some (pos, neg) ->
 				 		set d1 x (pos, neg-1), set_arn (del_arn d2 (pos+neg) (x, pos >= neg)) (pos+neg-1) (x, pos >= neg-1), d3
-
-let rec print_litterals (l: litteral list) : unit = 
-	match l with
-	| [] -> print_newline ()
-	| x::q -> print_string (str_of_lit x ^ " ") ; print_litterals q
 
 (* supprime une occurence de tous les littéraux de c dans vars*)
 let rec update_var_from_clause (c: clause) (vars: variables) : variables =
@@ -210,13 +181,7 @@ let rec subst_fnc (x: string) (v: bool) (f: fnc) (vars: variables) (lc: valuatio
 						 		else let f'', vars'', lc'' = subst_fnc x v f' vars' lc' in
 						 		(c'::f''), vars'', lc''
 
-
-let rec max_arn (t: 'a arn) : 'a option =
-	match t with
-	| None -> None
-	| Some (Feuille x) -> Some x
-	| Some (Noeud(_, _, _, d)) -> max_arn (Some d)
-
+(* Renvoie la plus grande valeur de d *)
 let rec max_dict_arn (dico: ('k, 'v arn) dico) : 'v option = 
 	match dico with
 	| None -> None
@@ -254,6 +219,7 @@ let rec quine_fnc_aux (f: fnc) (vars: variables) (lc: valuation) (v: valuation):
 				 					 | None -> None
 				 					 | Some l2 -> Some ((x, not v)::l2)
 
+(* Retourne la liste des clauses littérals sous forme de valuation*)
 let rec find_lit_clause (f: fnc) : valuation = 
 	match f with
 	| [] -> []
@@ -268,6 +234,7 @@ let quine_fnc (f: formule) : sat_result =
 		quine_fnc_aux f' vars lc []
 	else failwith "la formule n'est pas sous fnc"
 
+(* affiche seuleument les variable dont la valuation est true *)
 let rec print_true (v: valuation) : unit = 
 	match v with
 	| [] -> ()

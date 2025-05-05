@@ -2,6 +2,7 @@ open Parser
 open ARN
 open Dico
 
+(* Retourne l'ensemble des variable de f sous forme d'arn *)
 let var_arn (f: formule) : string arn =
 	let rec insert_var_arn (f: formule) (t: string arn) : string arn =
 		match f with
@@ -11,6 +12,7 @@ let var_arn (f: formule) : string arn =
 		| And(f1, f2) | Or(f1, f2) -> insert_var_arn f1 (insert_var_arn f2 t)
 	in insert_var_arn f None
 
+(* transforme l'arn des variables en liste *)
 let list_var_from_arn (t: 'a arn) : 'a list =
 	let rec list_arn_aux (t: 'a arn) (l: 'a list) : 'a list = 
 		match t with
@@ -83,21 +85,6 @@ let rec subst (f: formule) (v: string) (g: formule) : formule =
 	| Or(f1, f2) -> Or(subst f1 v g, subst f2 v g)
 	| And(f1, f2) -> And(subst f1 v g, subst f2 v g)
 
-(* let rec quine_fnc_aux (f: fnc) (v: valuation) : sat_result =
-	match	f with
-	| [] -> Some []
-	| _ when have_empty_clause f -> None
-	| _ ->
-			match v with
-			| [] -> Some []
-			| (x, _)::q -> let f' = subst_fnc x true f in
-				match quine_fnc_aux f' q with
-				| Some v' -> Some ((x, true)::v')
-				| None -> let f'' = subst_fnc x false f in
-					match quine_fnc_aux f'' q with
-					| None -> None
-					| Some v2' -> Some ((x, false)::v2') *)
-
 let quine (f: formule) : sat_result =
 	let rec quine_aux (f: formule) (v: string list): sat_result = 
 		match f with
@@ -135,6 +122,7 @@ let find_var (f: formule) : string =
 			find_var_aux f1 d' m'
 	in fst(fst(find_var_aux f None ("", 0)))
 
+(* quine en utilisant find_var (lent) *)
 let rec quine2 (f: formule) : sat_result =
 	if f = Top then Some []
 		else if f = Bot then None
@@ -148,6 +136,7 @@ let rec quine2 (f: formule) : sat_result =
 				| None -> None
 				| Some v' -> Some ((x, false)::v')
 
+(* affiche seuleument les variable dont la valuation est true *)
 let rec print_true (v: valuation) : unit = 
 	match v with
 	| [] -> ()

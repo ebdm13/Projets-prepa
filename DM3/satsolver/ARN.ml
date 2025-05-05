@@ -2,6 +2,7 @@ type couleur = Rouge | Noir
 type 'a noeud_arn = Feuille of 'a | Noeud of couleur * 'a * 'a noeud_arn * 'a noeud_arn
 type 'a arn = 'a noeud_arn option
 
+(* Teste si t contient x *)
 let rec recherche (x: 'a) (t: 'a arn) : bool = 
 	match t with
 	| Some (Feuille e) when x = e -> true
@@ -9,6 +10,7 @@ let rec recherche (x: 'a) (t: 'a arn) : bool =
 	| Some (Noeud(_, e, g, d)) -> recherche x (Some g)
 	| _ -> false
 
+(* Corrige t après insertion *)
 let correctionARN (t: 'a noeud_arn) : 'a noeud_arn = 
 	match t with
 	| Noeud(Noir, z, Noeud(Rouge, y, Noeud(Rouge, x, a, b), c), d)
@@ -18,6 +20,7 @@ let correctionARN (t: 'a noeud_arn) : 'a noeud_arn =
 	-> Noeud(Rouge, y, Noeud(Noir, x, a, b), Noeud(Noir, z, c, d))
 	| _ -> t
 
+(* insert x dans t et renvoie un arn relaxé *)
 let rec insertionARNrelax (x: 'a) (t: 'a noeud_arn ) : 'a noeud_arn =
 	match t with
 	| Feuille e when e < x -> Noeud(Rouge, e, Feuille e, Feuille x)
@@ -26,6 +29,7 @@ let rec insertionARNrelax (x: 'a) (t: 'a noeud_arn ) : 'a noeud_arn =
  	| Noeud(c, e, g, d) when e < x -> correctionARN (Noeud(c, e, g, insertionARNrelax x d))
  	| Noeud(c, e, g, d) -> correctionARN (Noeud(c, e, insertionARNrelax x g, d))
 
+(* insert x dans t *)
 let insertionARN (x: 'a) (t: 'a arn) : 'a arn =
 	match t with
 	| None -> Some (Feuille x)
@@ -78,6 +82,7 @@ let correction_del_right (t: 'a noeud_arn) : 'a noeud_arn * bool =
 	| Noeud(Noir, z, Noeud(Rouge, x, g, Noeud(Noir, y, g', d')), d) -> Noeud(Noir, x, g, Noeud(Noir, z, Noeud(Rouge, y, g', d'), d)), false
 	| _ -> t, false
 
+(* supprime x dans t et renvoie un arn relaxé *)
 let rec deleteARNrelax (x: 'a) (t: 'a noeud_arn) : 'a noeud_arn * bool= 
 	match t with
 	| Noeud(c, y, g, Feuille z) when z = x -> g, (c = Noir)
@@ -90,6 +95,7 @@ let rec deleteARNrelax (x: 'a) (t: 'a noeud_arn) : 'a noeud_arn * bool=
 		else Noeud(c, y, g', d), false
 	| _ -> t, false
 
+(* supprime x dans t *)
 let deleteARN (x: 'a) (t: 'a arn) : 'a arn = 
 	match t with
 	| None -> None
@@ -98,14 +104,9 @@ let deleteARN (x: 'a) (t: 'a arn) : 'a arn =
 		| Feuille y -> Some (Feuille y)
 		| Noeud (_, y, g, d) -> Some (Noeud (Noir, y, g, d))
 
-let rec is_abr (t: 'a arn) : bool =
+(* Renvoie le plus grand élément de t *)
+let rec max_arn (t: 'a arn) : 'a option =
 	match t with
-	| None | Some Feuille _ -> true
-	| Some (Noeud (_, x, g, d)) -> if is_abr (Some g) && is_abr (Some d) then
-		match g, d with
-		| Noeud(_, y, _, _), Noeud(_, z, _, _)
-		| Noeud(_, y, _, _), Feuille z
-		| Feuille y, Noeud(_, z, _, _)
-		| Feuille y, Feuille z
-			-> y <= x && x < z
-	else false
+	| None -> None
+	| Some (Feuille x) -> Some x
+	| Some (Noeud(_, _, _, d)) -> max_arn (Some d)

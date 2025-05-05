@@ -4,6 +4,7 @@ type ('k, 'v) noeud_arn_dico =
 	| Noeud of couleur * 'k * ('k, 'v) noeud_arn_dico * ('k, 'v) noeud_arn_dico  
 type ('k, 'v) dico = ('k, 'v) noeud_arn_dico option
 
+(* Corrige t après insertion (deux neuds rouges)*)
 let correctionARN_d (t: ('k, 'v) noeud_arn_dico) : ('k, 'v) noeud_arn_dico = 
 	match t with
 	| Noeud(Noir, z, Noeud(Rouge, y, Noeud(Rouge, x, a, b), c), d)
@@ -13,6 +14,7 @@ let correctionARN_d (t: ('k, 'v) noeud_arn_dico) : ('k, 'v) noeud_arn_dico =
 	-> Noeud(Rouge, y, Noeud(Noir, x, a, b), Noeud(Noir, z, c, d))
 	| _ -> t
 
+(* insert la valeur v dans dico à la clée k et renvoie un arn relaxé*)
 let rec set_relax (dico: ('k, 'v) noeud_arn_dico) (k: 'k) (v: 'v) : ('k, 'v) noeud_arn_dico =
 	match dico with
 	| Feuille (k', v') when k' < k -> Noeud(Rouge, k', Feuille (k', v'), Feuille (k, v))
@@ -21,6 +23,7 @@ let rec set_relax (dico: ('k, 'v) noeud_arn_dico) (k: 'k) (v: 'v) : ('k, 'v) noe
  	| Noeud(c, k', g, d) when k' < k -> correctionARN_d (Noeud(c, k', g, set_relax d k v))
  	| Noeud(c, k', g, d) -> correctionARN_d (Noeud(c, k', set_relax g k v, d))	
 
+(* insert la valeur v dans dico à la clée k *)
 let set (d: ('k, 'v) dico) (k: 'k) (v: 'v) : ('k, 'v) dico =
 	match d with
 	| None -> Some (Feuille (k, v))
@@ -29,6 +32,7 @@ let set (d: ('k, 'v) dico) (k: 'k) (v: 'v) : ('k, 'v) dico =
 		| Feuille _ -> Some dico'
 		| Noeud(_, k', g, d) -> Some (Noeud(Noir, k', g, d))
 
+(* Renvoie la valeur contenue dans dico à la clée k *)
 let rec get (dico: ('k, 'v) dico) (k :'k) : 'v option =
 	match dico with
 	| None -> None
@@ -80,6 +84,7 @@ let correction_del_right_d (dico: ('k, 'v) noeud_arn_dico) : ('k, 'v) noeud_arn_
 	| Noeud(Noir, z, Noeud(Rouge, x, g, Noeud(Noir, y, g', d')), d) -> Noeud(Noir, x, g, Noeud(Noir, z, Noeud(Rouge, y, g', d'), d)), false
 	| _ -> dico, false
 
+(* Supprime k dans dico et renvoie un arn relaxé *)
 let rec del_relax (dico: ('k, 'v) noeud_arn_dico) (k: 'k) : ('k, 'v) noeud_arn_dico * bool= 
 	match dico with
 	| Noeud(c, y, g, Feuille (k', _)) when k' = k -> g, (c = Noir)
@@ -92,6 +97,7 @@ let rec del_relax (dico: ('k, 'v) noeud_arn_dico) (k: 'k) : ('k, 'v) noeud_arn_d
 		else Noeud(c, y, g', d), false
 	| _ -> dico, false
 
+(* Supprime k dans dico *)
 let del (dico: ('k, 'v) dico) (k: 'k) : ('k, 'v) dico = 
 	match dico with
 	| None -> None

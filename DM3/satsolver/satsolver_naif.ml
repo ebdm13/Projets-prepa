@@ -67,6 +67,7 @@ let rec var_list (f: formule) : string list =
 	| Not(f') -> var_list f'
 	| And(f1, f2) | Or(f1, f2) -> union (var_list f1) (var_list f2)
 
+(* Retourne l'ensemble des variable de f sous forme d'arn *)
 let var_arn (f: formule) : string arn =
 	let rec insert_var_arn (f: formule) (t: string arn) : string arn =
 		match f with
@@ -76,6 +77,7 @@ let var_arn (f: formule) : string arn =
 		| And(f1, f2) | Or(f1, f2) -> insert_var_arn f1 (insert_var_arn f2 t)
 	in insert_var_arn f None
 
+(* transforme l'arn des variables en liste *)
 let list_var_from_arn (t: string arn) : string list =
 	let rec list_arn_aux (t: string arn) (l: string list) : string list = 
 		match t with
@@ -107,6 +109,7 @@ let rec add_one (l: bool list) : bool list =
 	| false::q -> true::q
 	| true::q -> false::(add_one q)	
 
+(* Renvoie la prochaine valuation à tester *)
 let rec valuation_next (v: valuation) : valuation option =
 	match v with
 	| [] -> Some []
@@ -143,6 +146,7 @@ let test () =
 		| "test" -> test ()
 		| file -> print_string (read_file file) ; print_newline () *)
 
+(* affiche seuleument les variable dont la valuation est true *)
 let rec print_true (v: valuation) : unit = 
 	match v with
 	| [] -> ()
