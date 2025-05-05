@@ -1,146 +1,6 @@
-type formule =
-	| Var of string
-	| Top
-	| Bot
-	| And of formule * formule
-	| Or of formule * formule
-	| Not of formule
-
-type couleur = Rouge | Noir
-type 'a noeud_arn = Feuille of 'a | Noeud of couleur * 'a * 'a noeud_arn * 'a noeud_arn
-type 'a arn = 'a noeud_arn option
-
-type valuation = (string * bool) list
-type sat_result = valuation option
-
-let implique (f1, f2) = Or(Not f1, f2)
-let equivalence (f1, f2) = And(implique (f1, f2), implique (f2, f1))
-
-(*** PARSER ***)
-
-exception Erreur_syntaxe
-exception Fichier_invalide
-
-(* Symboles:
-	'T' -> true
-	'F' -> false
-	'&' -> And
-	'|' -> Or
-	'~' -> Not
-	'>' -> implication
-	'=' -> equivalence
- *)
-
-(* Détermine si c correspond à un opérateur binaire logique *)
-let is_binop (c: char) : bool = match c with 
-	| '&' |  '|' |  '>' |  '='  -> true
-	| _ -> false 
-
-(* Priorité de l'opérateur c. Permet de déterminer
-	comment interpréter une formule sans parenthèses.
-	Par exemple, "x&y|z" sera interprété comme "(x&y)|z"
-	car & est plus prioritaire que | *)
-let priority (c: char) : int = match c with
-	| '&' -> 4
-	| '|' -> 3
-	| '=' -> 2
-	| '>' -> 1
-	| _ -> raise Erreur_syntaxe (* c n'est pas un opérateur *)
-
-(* indice de l'opérateur le moins prioritaire parmis ceux
-   qui ne sont pas entre parenthèses entre s.[i] et s.[j] 
-   inclus *)
- let find_op_surface (s: string) (i: int) (j: int) : int =
- 	(* 
- 	   Renvoie l'indice de l'opérateur le moins prioritaire entre
- 	   i et j, sachant que res est l'indice du meilleur opérateur
- 	   entre i et k-1.
- 	   paren_lvl: niveau d'imbrication actuel des parenthèses *)
- 	let rec find_op_paren (k:int) (res:int) (paren_lvl: int) : int  =
- 		if k=j+1 then res else
- 		if s.[k] = '(' then find_op_paren (k+1) res (paren_lvl+1)
- 		else if s.[k] = ')' then find_op_paren (k+1) res (paren_lvl-1) 
-
- 		(* Le caractère lu est pris si l'on est hors des parenthèses,
- 		   que le caractère est bien un opérateur, et qu'il est moins
- 		   prioritaire que le meilleur résultat jusqu'ici *)
- 		else if paren_lvl = 0 
- 			 && is_binop s.[k] 
- 			 && (res = -1 || priority s.[k] < priority s.[res]) 
- 			 then find_op_paren (k+1) k (paren_lvl)
- 		else find_op_paren (k+1) res (paren_lvl)
- 	in find_op_paren i (-1) 0;;
-
-(* Renvoie une formule construite à partir de la chaîne s.
-   Lève une exception Erreur_syntaxe si la chaîne ne représente pas une formule valide. *)
-let parse (s: string) : formule =
-	let n = String.length s in
-	(* construit une formule à partir de s[i..j] *)
-	let rec parse_aux (i: int) (j:int) =
-		assert (0 <= i && i < n && 0 <= j && j < n && i <= j );
-		if s.[i] = ' ' then parse_aux (i+1) j
-		else if s.[j] = ' ' then parse_aux i (j-1)
-		else let k = find_op_surface s i j in 
-		if k = -1 then
-			if s.[i] = '~' then 
-				Not (parse_aux (i+1) j)
-			else if s.[i] = '(' then
-				begin 
-					if (s.[j] != ')') then (print_int j; failwith "mauvais parenthésage") else
-					parse_aux (i+1) (j-1)
-				end
-			else if (i = j && s.[i] = 'T') then Top
-			else if (i = j && s.[i] = 'F') then Bot
-			else Var(String.sub s i (j-i+1))
-
-		else match s.[k] with
-			| '&' -> And(parse_aux i (k-1), parse_aux (k+1) j)
-			| '|' -> Or(parse_aux i (k-1), parse_aux (k+1) j)
-			| '=' -> equivalence(parse_aux i (k-1), parse_aux (k+1) j)
-			| '>' -> implique(parse_aux i (k-1), parse_aux (k+1) j)
-			| _ -> raise Erreur_syntaxe
-	in parse_aux 0 (String.length s -1)
-
-(* Renvoie une formule construire à partir du contenu du fichier fn.
-   Lève une exception Erreur_syntaxe si le contenu du fichier n'est pas une formule valide.
-   Lève une exception Sys_error(message_erreur) si le nom du fichier n'est pas valide. *)
-let from_file (filename: string) : formule = 
-	(* concatène toutes les lignes de f en une seule chaîne *)
-	let rec read_lines f = 
-		try 
-			let next_line = input_line f in
-			let s = read_lines f in
-			next_line ^ s
-		with 
-			| End_of_file -> ""
-	in
-	let f = open_in filename in 
-	let s = read_lines f in
-	parse s
-
-let correctionARN (t: 'a noeud_arn) : 'a noeud_arn = 
-	match t with
-	| Noeud(Noir, z, Noeud(Rouge, y, Noeud(Rouge, x, a, b), c), d)
-	| Noeud(Noir, z, Noeud(Rouge, x, a, Noeud(Rouge, y, b, c)), d) 
-	| Noeud(Noir, x, a, Noeud(Rouge, z, Noeud(Rouge, y, b, c), d))
-	| Noeud(Noir, x, a, Noeud(Rouge, y, b, Noeud(Rouge, z, c, d)))
-	-> Noeud(Rouge, y, Noeud(Noir, x, a, b), Noeud(Noir, z, c, d))
-	| _ -> t
-
-let rec insertionARNrelax (x: 'a) (t: 'a noeud_arn ) : 'a noeud_arn =
-	match t with
-	| Feuille e when e < x -> Noeud(Rouge, e, Feuille e, Feuille x)
-	| Feuille e | Noeud(_, e, _, _) when e = x -> t
-	| Feuille e -> Noeud(Rouge, x, Feuille x, Feuille e)
- 	| Noeud(c, e, g, d) when e < x -> correctionARN (Noeud(c, e, g, insertionARNrelax x d))
- 	| Noeud(c, e, g, d) -> correctionARN (Noeud(c, e, insertionARNrelax x g, d))
-
-let insertionARN (x: 'a) (t: 'a arn) : 'a arn =
-	match t with
-	| None -> Some (Feuille x)
-	| Some t' -> match insertionARNrelax x t' with
-					| Noeud(c, e, g, d) -> Some (Noeud(Noir, e, g, d))
-					| Feuille e -> Some (Feuille e)	
+open Parser
+open ARN
+open Dico
 
 let var_arn (f: formule) : string arn =
 	let rec insert_var_arn (f: formule) (t: string arn) : string arn =
@@ -156,8 +16,11 @@ let list_var_from_arn (t: 'a arn) : 'a list =
 		match t with
 		| None -> l
 		| Some Feuille(a) -> a::l
-		| Some Noeud(_, _, t1, t2) -> list_arn_aux (Some t1) (list_arn_aux (Some t2) l)
+		| Some Noeud(_, _, g, d) -> list_arn_aux (Some g) (list_arn_aux (Some d) l)
 	in list_arn_aux t []
+
+type valuation = (string * bool) list
+type sat_result = valuation option
 
 let rec valuation_init (l: string list) : valuation =
 	List.map (fun x -> (x, false)) l
@@ -184,9 +47,6 @@ let rec simpl_full (f: formule) : formule =
 (* Simplifie f en temps linéaire*)
 let rec simpl (f: formule) : formule =
   match f with
-  | Top | Bot -> f
-  | Not Top -> Bot
-  | Not Bot -> Top
   | Not (Not f') -> simpl f'
   | Not f' -> 
       let f'' = simpl f' in
@@ -223,23 +83,70 @@ let rec subst (f: formule) (v: string) (g: formule) : formule =
 	| Or(f1, f2) -> Or(subst f1 v g, subst f2 v g)
 	| And(f1, f2) -> And(subst f1 v g, subst f2 v g)
 
+(* let rec quine_fnc_aux (f: fnc) (v: valuation) : sat_result =
+	match	f with
+	| [] -> Some []
+	| _ when have_empty_clause f -> None
+	| _ ->
+			match v with
+			| [] -> Some []
+			| (x, _)::q -> let f' = subst_fnc x true f in
+				match quine_fnc_aux f' q with
+				| Some v' -> Some ((x, true)::v')
+				| None -> let f'' = subst_fnc x false f in
+					match quine_fnc_aux f'' q with
+					| None -> None
+					| Some v2' -> Some ((x, false)::v2') *)
+
 let quine (f: formule) : sat_result =
-	let rec quine_aux (f: formule) (v: valuation): sat_result = 
-		if f = Top then Some []
-		else if f = Bot then None
-		else match v with
-		| [] -> quine_aux (simpl f) [] 
-		| (x, _)::q -> let f' = simpl (subst f x Top) in
-			match quine_aux f' q with
-			| Some v' -> Some ((x, true)::v')
-			| None -> let f' = simpl (subst f x Bot) in
+	let rec quine_aux (f: formule) (v: string list): sat_result = 
+		match f with
+		| Top -> Some []
+		| Bot -> None
+		| _ ->
+			match v with
+			| [] -> quine_aux (simpl f) [] 
+			| x::q -> let f' = simpl (subst f x Top) in
 				match quine_aux f' q with
-				| None -> None
-				| Some v2' -> Some ((x, false)::v2')
+				| Some v' -> Some ((x, true)::v')
+				| None -> let f' = simpl (subst f x Bot) in
+					match quine_aux f' q with
+					| None -> None
+					| Some v2' -> Some ((x, false)::v2')
 	in 
-	let var_l = list_var_from_arn (var_arn f) in
-	let valo = valuation_init var_l in
-	quine_aux f valo
+	let v = list_var_from_arn (var_arn f) in
+	quine_aux (simpl f) v
+
+(* Renvoie la variable dont la fréquence d'apparition dans f est la plus élevé. *)
+let find_var (f: formule) : string =
+	let rec find_var_aux (f: formule) (dico: (string, int) dico) (m: string*int): (string*int) * (string, int) dico =
+		match f with
+		| Top | Bot -> m, dico
+		| Var(q) -> 
+				begin
+				match get dico q with
+				| None when snd m < 1 -> (q, 1), set dico q 1
+				| None -> m, set dico q 1 
+				| Some v when snd m <= v -> (q, v+1), set dico q (v + 1)
+				| Some v -> m, set dico q (v + 1)
+				end
+		| Not(f') -> find_var_aux f' dico m
+		| And (f1, f2) | Or(f1, f2) -> let m', d' = find_var_aux f2 dico m in
+			find_var_aux f1 d' m'
+	in fst(fst(find_var_aux f None ("", 0)))
+
+let rec quine2 (f: formule) : sat_result =
+	if f = Top then Some []
+		else if f = Bot then None
+		else match find_var f with
+		| "" -> quine (simpl f)
+		| x -> let f' = simpl (subst f x Top) in
+			match quine f' with
+			| Some v -> Some ((x, true)::v)
+			| None -> let f'' = simpl (subst f x Bot) in
+				match quine f'' with
+				| None -> None
+				| Some v' -> Some ((x, false)::v')
 
 let rec print_true (v: valuation) : unit = 
 	match v with
@@ -256,8 +163,9 @@ let main () =
 		match Sys.argv.(1) with
 		(* | "test" -> test () *)
 		| file ->
+			let f = from_file file in
 			let t0 = Sys.time () in
-			let res = quine (from_file file) in
+			let res = quine f in
 			let time = Sys.time () -. t0 in
 			print_string "Temps d'execution: "; print_float time; print_string "s\n";
 			match res with
