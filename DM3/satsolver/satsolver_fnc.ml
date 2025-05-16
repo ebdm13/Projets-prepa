@@ -200,13 +200,13 @@ let rec subst_certain_var (f: fnc) (vars: variables) (lc: valuation) (l: valuati
 	let _, _, d = vars in
 	match max_dict_arn d with
 	| None -> f, vars, lc, l
-	| Some (x, v) -> let f', vars', lc' = subst_fnc x v f vars lc in
+	| Some (x, v) -> print_string ("d3: " ^ x ^ "\n"); let f', vars', lc' = subst_fnc x v f vars lc in
 	subst_certain_var f' vars' lc' ((x, v)::l)
 
 let rec quine_fnc_aux (f: fnc) (vars: variables) (lc: valuation) (v: valuation): sat_result =
 	let f', vars', lc', l = subst_lit_clause f vars lc v in
 	let f'', (d1, d2, d3), lc'', l' = subst_certain_var f' vars' lc' l in
-	match	f'' with
+	match f'' with
 	| [] -> Some l'
 	| None::_ -> None
 	| _ -> match max_dict_arn d2 with
