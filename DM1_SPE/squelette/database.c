@@ -26,7 +26,7 @@ void delete_database(database db){
 void print_database(database db){
     int n = db->size;
     assert(n>=0);
-    printf("{");
+    printf("{\n");
     for (int i = 0; i < n ; i++) {
         printf("\t");
         print_vector(db->datas[i].vector);

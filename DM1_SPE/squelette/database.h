@@ -15,11 +15,14 @@ struct database_s {
 
 typedef struct database_s * database;
 
-
+/* alloue la mémoire pour une base de données de taille n, initialement vide,
+ et la retourne. */
 database create_empty_database (int n);
+
+/* libère l’espace mémoire occupé par db */
 void delete_database(database db);
+
+/* affiche db */
 void print_database(database db);
 
 #endif
-
-
