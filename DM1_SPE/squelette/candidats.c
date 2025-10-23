@@ -3,7 +3,6 @@
 #include <assert.h>
 
 #include "candidats.h"
-#include "vector.h"
 
 candidats create_list(int ind, double dist){
     candidats lc = malloc(sizeof(struct s_cellule));

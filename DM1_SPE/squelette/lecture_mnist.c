@@ -42,11 +42,9 @@ void mnist_input(int n, database *p_db_train, int m, database *p_db_test) {
   // remplit * p_db_train avec cette base
   // crée une bd de test avec les m données suivantes du fichier
   // remplit * p_db_test avec cette base
-  printf("décommenter le code de la fonction mnist_input dès que les database et les vector sont bien définis\n");
-  /*
-  FILE *f = fopen("./MNIST-txt/MNIST_train.txt", "r");
+  FILE *f = fopen("./MNIST_txt/MNIST_train.txt", "r");
   if (f == NULL) {
-    printf("le fichier ./MNIST-txt/MNIST_train.txt n'a pas pu être ouvert\n");
+    printf("le fichier ./MNIST_txt/MNIST_train.txt n'a pas pu être ouvert\n");
   }
   database db_train = create_empty_database(n);
   database db_test = create_empty_database(m);
@@ -75,5 +73,4 @@ void mnist_input(int n, database *p_db_train, int m, database *p_db_test) {
   *p_db_test = db_test;
   *p_db_train = db_train;
   return;
-  */
 }
