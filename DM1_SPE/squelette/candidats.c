@@ -38,6 +38,11 @@ int insertion_list(candidats* pl, int r, int k, database db, int i, vector input
     double d = distance(input, db->datas[i].vector);
     candidats next = *pl;
     candidats prev = NULL;
+
+    if ((*pl) != NULL && d >= (*pl)->distance && r == k) {
+        return r;
+    }
+
     while (next != NULL && d < next->distance){
         prev = next;
         next = next->next;
