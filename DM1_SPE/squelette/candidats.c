@@ -39,6 +39,7 @@ int insertion_list(candidats* pl, int r, int k, database db, int i, vector input
     candidats next = *pl;
     candidats prev = NULL;
 
+    // évite d'ajouter un élément puis de l'enlever inutilement
     if ((*pl) != NULL && d >= (*pl)->distance && r == k) {
         return r;
     }
@@ -49,18 +50,20 @@ int insertion_list(candidats* pl, int r, int k, database db, int i, vector input
     }
 
     candidats new = create_list(i, d);
+
     if (prev == NULL){
         *pl = new;
     } else {
         prev->next = new;
     }
     new->next = next;
-    r += 1;
-    if (r > k){
-        candidats prev_pl = *pl;
+
+    if (r == k){
+        candidats to_delete = *pl;
         *pl = (*pl)->next;
-        free(prev_pl);
-        r -= 1;
+        free(to_delete);
+    } else {
+        r++;
     }
     return r;
 }

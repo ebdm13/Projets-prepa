@@ -98,7 +98,29 @@ let rec cree_arbre_kd_aux (data: vector array) (k: int) (i: int) (d: int) (f: in
 let rec cree_arbre_kd (data: vector array) (k: int) =
   cree_arbre_kd_aux data k 0 0 (Array.length data - 1)
 
-let rec pp_voisins (n: int) (t: kd_tree) (v: vector) : vector array =
+let sq_distance (x: vector) (y: vector) : float =
+  let n = Array.length x in
+  let d = ref 0. in
+  for i = 0 to n - 1 do
+    d := !d +. (x.(i) -. y.(i)) *. (x.(i) -. y.(i))
+  done;
+  !d
+
+
+(* Renvoie le plus proche voisin de x dans t*)
+let rec pp_voisin (t: kd_tree) (x: vector) : vector option =
+  match t with
+  | Vide -> None
+  | Node(i, v, g, d) -> if x.(i) <= v.(i) then
+    begin
+      let c_g = pp_voisin g x in
+      if c_g <> None then
+      None
+      else None
+    end
+    else
+      None
+
 
 
 let main_exemple () =

@@ -10,34 +10,29 @@ int nb_class_max;
 
 candidats pproche_list(database db, int k, vector input){
     assert(db->size >= k);
-    candidats* l = malloc(sizeof(candidats));
-    *l = NULL;
+    candidats l = NULL;
     int r = 0;
     for (int i = 0; i < db->size; i++) {
-        r = insertion_list(l, r, k, db, i, input);
+        r = insertion_list(&l, r, k, db, i, input);
     }
-    candidats res = *l;
-    free(l);
-    return res;
+    return l;
 }
 
 int classe_majoritaire(database db, candidats lc){
-    int* nb_elem_class = calloc(nb_class_max, sizeof(int));
+    int nb_elem_class[nb_class_max];
+    for (int i = 0; i < nb_class_max; i++){
+        nb_elem_class[i] = 0;
+    }
     int max = 0;
     int class_max = 0;
-    candidats next = lc;
-    int count = 0;
-    while (next != NULL){
-        count++;
-        int class = db->datas[next->indice].class;
-        nb_elem_class[class] += 1;
-        if (nb_elem_class[class] > max){
-            max = nb_elem_class[class];
-            class_max = class;
+    for (candidats next = lc; next != NULL; next = next->next){
+        int c = db->datas[next->indice].class;
+        nb_elem_class[c] += 1;
+        if (nb_elem_class[c] > max){
+            max = nb_elem_class[c];
+            class_max = c;
         }
-        next = next->next;
     }
-    free(nb_elem_class);
     return class_max;
 }
 

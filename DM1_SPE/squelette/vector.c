@@ -36,9 +36,11 @@ double distance(vector v1, vector v2){
     assert(v1->taille == v2->taille);
     int n = v1->taille;
     assert(n >= 0);
-    double dist_square = 0;
+    int dist_square = 0;
     for (int i = 0; i < n; i++) {
-        dist_square += (v1->content[i] - v2->content[i]) * (v1->content[i] - v2->content[i]);
+        int diff = (v1->content[i] - v2->content[i]);
+        dist_square += diff * diff;
     }
-    return sqrt(dist_square);
+    //return sqrt(dist_square);
+    return dist_square;
 }
