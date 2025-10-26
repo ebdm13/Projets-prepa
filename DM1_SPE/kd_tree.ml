@@ -12,6 +12,8 @@ let genere_jeu_donnes (n: int) : vector array =
 (* OUTILS GRAPHIQUES *)
 
 let yellow = Graphics.rgb 210 160 4
+let red = Graphics.rgb 168 27 3
+let green = Graphics.rgb 105 105 0
 let cx = 1000
 let cy = 1000
 let to_x pt = (pt *. (float_of_int cx)) |> int_of_float
@@ -48,8 +50,6 @@ let draw_kd_tree (t: kd_tree) =
      dessine l'arbre t
   *)
   draw_kd_tree_aux t 0 0 cx cy
-
-
 
 let f_cmp (i: int) (x: vector) (y: vector) : bool =
   x.(i) <= y.(i)
@@ -106,21 +106,53 @@ let sq_distance (x: vector) (y: vector) : float =
   done;
   !d
 
+let nearest_among (l: vector option list) (x: vector) : vector option =
+  let rec nearest_among_aux (l: vector option list) (x: vector) (m: vector option) (d_min: float): vector option =
+    match l with
+    | [] -> m
+    | None::q -> nearest_among_aux q x m d_min
+    | Some v::q -> if m = None || sq_distance v x < d_min then nearest_among_aux q x (Some v) (sq_distance v x)
+                   else nearest_among_aux q x m d_min
+  in nearest_among_aux l x None 0.
 
 (* Renvoie le plus proche voisin de x dans t*)
 let rec pp_voisin (t: kd_tree) (x: vector) : vector option =
   match t with
   | Vide -> None
-  | Node(i, v, g, d) -> if x.(i) <= v.(i) then
-    begin
-      let c_g = pp_voisin g x in
-      if c_g <> None then
-      None
-      else None
-    end
-    else
-      None
+  | Node(i, v, g, d) ->
+    let not_sure (t': kd_tree) (c: vector option) : vector option=
+      let c' = pp_voisin t' x in
+      nearest_among (c::c'::(Some v)::[]) x
+    in
+    let check_from (t': kd_tree) : vector option =
+      let c = pp_voisin t' x in
+      let other_direction = if t' = g then d else g in
+      match c with
+      | None -> not_sure other_direction c
+      | Some v when sq_distance v x <= (x.(i) -. v.(i)) *. (x.(i) -. v.(i)) -> c
+      | _ -> not_sure other_direction c
+    in
+    if x.(i) <= v.(i) then check_from g
+    else check_from d
 
+
+let draw_nn (t: kd_tree) (x: vector) : unit =
+  let dx, dy = to_x x.(0), to_y x.(1) in
+  Graphics.set_color red;
+  Graphics.fill_circle dx dy 5;
+
+  match pp_voisin t x with
+  | None -> ()
+  | Some v ->
+    begin
+      let dx', dy' = to_x v.(0), to_y v.(1) in
+      Graphics.set_color green;
+      Graphics.fill_circle dx' dy' 5;
+      Graphics.set_color Graphics.black;
+      let dist: int = (dx - dx') * (dx - dx') + (dy - dy') * (dy - dy') |> float_of_int |> Float.sqrt |> int_of_float in
+      print_int dist;
+      Graphics.draw_circle dx dy dist
+    end
 
 
 let main_exemple () =
@@ -129,6 +161,6 @@ let main_exemple () =
   let kd_tree = cree_arbre_kd _t 2 in         (* TODO : remplacer ici par votre fonction de génération d'un arbre k dimensionel *)
   Graphics.open_graph " 1000x1000";
   draw_kd_tree kd_tree;
-  Graphics.loop_at_exit [] (fun _ -> ())
-
-let () = main_exemple ()
+  draw_nn kd_tree (Array.init 2 (fun _ -> Random.float 1.));
+  let _ = Graphics.wait_next_event [Key_pressed] in
+  Graphics.close_graph ()
