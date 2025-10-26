@@ -7,6 +7,8 @@
 *.midi
 *.cmi
 *.cmo
+*.cmx
+*.o
 !DM2/reponses.pdf
 DM2/plotwav.py
 DM2/Partitions/*.pdf

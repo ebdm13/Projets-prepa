@@ -92,7 +92,6 @@ let rec empty_clause (f: fnc) : bool =
   | _::f' -> empty_clause f'
 
 let rec quine_fnc_aux (f: fnc) (v: string list) : sat_result =
-	print_int (List.length v); print_newline ();
 	match f with
 	| [] -> Some []
 	| _ when empty_clause f -> None
@@ -111,7 +110,6 @@ let rec quine_fnc_aux (f: fnc) (v: string list) : sat_result =
 				match quine_fnc_aux (subst_fnc x false f) q with
 				| Some r1 -> Some ((x, false)::r1)
 				| None -> 
-					print_string ("BT: " ^ x ^ "------------------------------------------\n"); 
 					match quine_fnc_aux (subst_fnc x true f) q with
 					| None -> None
 					| Some r2 -> Some ((x, true)::r2)
