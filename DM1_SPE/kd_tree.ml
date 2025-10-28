@@ -129,38 +129,150 @@ let rec pp_voisin (t: kd_tree) (x: vector) : vector option =
       let other_direction = if t' = g then d else g in
       match c with
       | None -> not_sure other_direction c
-      | Some v when sq_distance v x <= (x.(i) -. v.(i)) *. (x.(i) -. v.(i)) -> c
+      | Some c_vect when sq_distance c_vect x <= (x.(i) -. v.(i)) *. (x.(i) -. v.(i)) -> c
       | _ -> not_sure other_direction c
     in
     if x.(i) <= v.(i) then check_from g
     else check_from d
 
+(* Insert (c, d_c) dans l où l est une de (v, d_v) où d_v est la distance (au carré)
+de v. 
+Présuposé: l est triée par ordre décroissant de distances (dv) et de taille r <= n.
+La liste renvoyée est aussi de taille <= n.
+*)
+let insert (c: vector) (d_c: float) (l: (vector*float) list) (r: int) (n: int) : (vector*float) list * int =
+  assert (r <= n);
+  let rec insert_aux (c: vector) (d_c: float) (succ: (vector*float) list) (pred: (vector*float) list) : (vector*float) list = 
+    match succ with
+    | (v, d_v)::q when d_c < d_v -> insert_aux c d_c q ((v, d_v)::pred)
+    | _ -> List.rev_append pred ((c, d_c)::succ)
+  in
+  match insert_aux c d_c l [] with
+  | [] -> [], 0
+  | (v, d_v)::q when r = n -> q, n
+  | l' -> l', r+1
+
+let test_insert () : unit = 
+  let x = [| 0.; 0.; 0. |] in
+
+  let v0 = [| 0.; 1.; 2. |] in
+  let v1 = [| 2.; 5.; 4. |] in
+  let v2 = [| 1.; 2.; 3. |] in
+
+  let d0 = sq_distance x v0 in
+  let d1 = sq_distance x v1 in
+  let d2 = sq_distance x v2 in
+
+ (* --- insertion 1 --- *)
+  let l, r = insert v0 d0 [] 0 3 in
+  assert (r = 1);
+  assert (List.length l = 1);
+  assert (snd (List.hd l) = d0);
+
+  (* --- insertion 2 --- *)
+  let l, r = insert v1 d1 l r 3 in
+  assert (r = 2);
+  assert (List.length l = 2);
+  (* ordre décroissant : v1 (plus loin) doit être avant v0 *)
+  let [(v_a, d_a); (v_b, d_b)] = l in
+  assert (d_a >= d_b);
+  assert (d_a = d1);
+  assert (d_b = d0);
+
+  (* --- insertion 3 --- *)
+  let l, r = insert v2 d2 l r 3 in
+  assert (r = 3);
+  assert (List.length l = 3);
+  (* tri décroissant attendu : v1 (plus loin), v2, v0 (plus proche) *)
+  let [(v_a, d_a); (v_b, d_b); (v_c, d_c)] = l in
+  assert (d_a >= d_b && d_b >= d_c);
+  assert (abs_float (d_a -. d1) < 1e-9);
+  assert (abs_float (d_b -. d2) < 1e-9);
+  assert (abs_float (d_c -. d0) < 1e-9);
+
+  (* --- insertion 4 (inutile) --- *)
+  let l', r' = insert v1 d1 l r 3 in
+  assert (r' = 3);
+  assert (l' = l);
+  (* toujours triée et identique *)
+  let [(v_a, d_a); (v_b, d_b); (v_c, d_c)] = l' in
+  assert (d_a >= d_b && d_b >= d_c);
+  assert (abs_float (d_a -. d1) < 1e-9);
+  assert (abs_float (d_b -. d2) < 1e-9);
+  assert (abs_float (d_c -. d0) < 1e-9)
+
+(* Renvoie les (au plus) n vecteurs les plus proches de x dans l (triés par ordre décroissant de distance) *)
+let k_nearest_among (l: vector list) (x: vector) (n: int) : vector list =
+  let rec k_nearest_among_aux (l: vector list) (x: vector) (kn: (vector*float) list) (r: int) : (vector*float) list =
+    assert (r <= n);
+    match l with
+    | [] -> kn
+    | c::q -> let kn', r' = insert c (sq_distance c x) kn r n in k_nearest_among_aux q x kn' r'
+  in 
+  List.map fst (k_nearest_among_aux l x [] 0)
+
+(* Renvoie les n plus proches voisins de x dans t *)
+let rec pp_voisins (t: kd_tree) (x: vector) (n: int) : vector list =
+  match t with
+  | Vide -> []
+  | Node(i, v, g, d) ->
+    let not_sure (t': kd_tree) (lc: vector list) (p: int) : vector list=
+      let lc' = pp_voisins t' x p in
+       k_nearest_among (v::(lc@lc')) x p
+    in
+    let check_from (t': kd_tree) : vector list =
+      let lc = pp_voisins t' x n in
+      let other_direction = if t' = g then d else g in
+      let dist_from_sep = (x.(i) -. v.(i)) *. (x.(i) -. v.(i)) in 
+      let s, ns = List.partition (fun c -> sq_distance x c <= dist_from_sep) lc in
+      let p = n - (List.length s) in 
+      s@(not_sure other_direction ns p)
+    in
+    if x.(i) <= v.(i) then check_from g
+    else check_from d
+
+let draw_one_nn (v: vector) : unit =
+  let dx', dy' = to_x v.(0), to_y v.(1) in
+  Graphics.fill_circle dx' dy' 5
 
 let draw_nn (t: kd_tree) (x: vector) : unit =
   let dx, dy = to_x x.(0), to_y x.(1) in
   Graphics.set_color red;
-  Graphics.fill_circle dx dy 5;
-
+  draw_one_nn x;
   match pp_voisin t x with
   | None -> ()
   | Some v ->
     begin
       let dx', dy' = to_x v.(0), to_y v.(1) in
       Graphics.set_color green;
-      Graphics.fill_circle dx' dy' 5;
+      draw_one_nn v;
       Graphics.set_color Graphics.black;
       let dist: int = (dx - dx') * (dx - dx') + (dy - dy') * (dy - dy') |> float_of_int |> Float.sqrt |> int_of_float in
-      print_int dist;
       Graphics.draw_circle dx dy dist
     end
 
+let draw_knn (t: kd_tree) (x: vector) (n: int) : unit = 
+  Graphics.set_color red;
+  draw_one_nn x;
+  Graphics.set_color green;
+  let l = pp_voisins t x n in
+  let v_max = List.fold_left (fun acc v -> if sq_distance v x  > sq_distance acc x then v else acc) (List.hd l) l in
+  List.iter (fun v -> draw_one_nn v) l;
+
+  let dx, dy = to_x x.(0), to_y x.(1) in
+  let dx', dy' = to_x v_max.(0), to_y v_max.(1) in
+  Graphics.set_color Graphics.black;
+  let dist: int = (dx - dx') * (dx - dx') + (dy - dy') * (dy - dy') |> float_of_int |> Float.sqrt |> int_of_float in
+  Graphics.draw_circle dx dy dist
 
 let main_exemple () =
-  let nb_points = 50 in
+  let nb_points = 1000 in
   let _t = genere_jeu_donnes nb_points in
-  let kd_tree = cree_arbre_kd _t 2 in         (* TODO : remplacer ici par votre fonction de génération d'un arbre k dimensionel *)
+  let n = 10 in
+  let kd_tree = cree_arbre_kd _t 2 in      
   Graphics.open_graph " 1000x1000";
   draw_kd_tree kd_tree;
-  draw_nn kd_tree (Array.init 2 (fun _ -> Random.float 1.));
+  (* draw_nn kd_tree (Array.init 2 (fun _ -> Random.float 1.)); *)
+  draw_knn kd_tree (Array.init 2 (fun _ -> Random.float 1.)) n;
   let _ = Graphics.wait_next_event [Key_pressed] in
   Graphics.close_graph ()
