@@ -54,6 +54,11 @@ let draw_kd_tree (t: kd_tree) =
 let f_cmp (i: int) (x: vector) (y: vector) : bool =
   x.(i) <= y.(i)
 
+(* cmp est un préordre sur t. 
+   La fonction renvoie q et modifie t de façon à ce que pour tous éléments t.(i) de t plus petit
+   que t.(p) selon cmp, i <= q et pour tous élémets t.(j) de t plus grand que t.(p)
+   selon cmp, j > q. De plus t.(q) = t.(p).
+ *)
 let partition (t: 'a array) (d: int) (f: int) (p: int) (cmp: 'a -> 'a -> bool) : int =
   let pivot = t.(p) in
   t.(p) <- t.(d);
@@ -76,6 +81,10 @@ let partition (t: 'a array) (d: int) (f: int) (p: int) (cmp: 'a -> 'a -> bool) :
   t.(!a-1) <- temp;
   !a-1
 
+(* cmp est un préordre sur t. 
+La fonction renvoie un élément v de t entre d et f tel qu'il existe un tris de t entre d et f
+dans lequel v est de rang r
+ *)
 let rec selection_rapide (t: 'a array) (d: int) (f: int) (r: int) (cmp: 'a -> 'a -> bool) : 'a =
   assert(d <= f);
   let p = Random.int_in_range ~min: d ~max: f in
@@ -85,6 +94,8 @@ let rec selection_rapide (t: 'a array) (d: int) (f: int) (r: int) (cmp: 'a -> 'a
   else if r < q then selection_rapide t d (q-1) r cmp
   else selection_rapide t (q+1) f r cmp
 
+(* Construit un l'arbre k-dimensionel à partir des vecteurs de data entre l'indice d et f
+en partant de la direction i *)
 let rec cree_arbre_kd_aux (data: vector array) (k: int) (i: int) (d: int) (f: int) : kd_tree =
   if d > f then Vide
   else
@@ -95,9 +106,11 @@ let rec cree_arbre_kd_aux (data: vector array) (k: int) (i: int) (d: int) (f: in
       Node(i, v, gauche, droite)
     end
 
+(* Renvoie l'arbre k-dimensionel construit à partir de data *)
 let rec cree_arbre_kd (data: vector array) (k: int) =
   cree_arbre_kd_aux data k 0 0 (Array.length data - 1)
 
+(* Renvoie la distance au carré entre y et x *)
 let sq_distance (x: vector) (y: vector) : float =
   let n = Array.length x in
   let d = ref 0. in
@@ -106,6 +119,7 @@ let sq_distance (x: vector) (y: vector) : float =
   done;
   !d
 
+(* Renvoie le plus proche voisins de x dans l si il y en a un, None sinon. *)
 let nearest_among (l: vector option list) (x: vector) : vector option =
   let rec nearest_among_aux (l: vector option list) (x: vector) (m: vector option) (d_min: float): vector option =
     match l with
@@ -115,7 +129,7 @@ let nearest_among (l: vector option list) (x: vector) : vector option =
                    else nearest_among_aux q x m d_min
   in nearest_among_aux l x None 0.
 
-(* Renvoie le plus proche voisin de x dans t*)
+(* Renvoie le plus proche voisin de x dans t si il y en a un, None sinon.*)
 let rec pp_voisin (t: kd_tree) (x: vector) : vector option =
   match t with
   | Vide -> None
@@ -152,55 +166,6 @@ let insert (c: vector) (d_c: float) (l: (vector*float) list) (r: int) (n: int) :
   | (v, d_v)::q when r = n -> q, n
   | l' -> l', r+1
 
-let test_insert () : unit =
-  let x = [| 0.; 0.; 0. |] in
-
-  let v0 = [| 0.; 1.; 2. |] in
-  let v1 = [| 2.; 5.; 4. |] in
-  let v2 = [| 1.; 2.; 3. |] in
-
-  let d0 = sq_distance x v0 in
-  let d1 = sq_distance x v1 in
-  let d2 = sq_distance x v2 in
-
- (* --- insertion 1 --- *)
-  let l, r = insert v0 d0 [] 0 3 in
-  assert (r = 1);
-  assert (List.length l = 1);
-  assert (snd (List.hd l) = d0);
-
-  (* --- insertion 2 --- *)
-  let l, r = insert v1 d1 l r 3 in
-  assert (r = 2);
-  assert (List.length l = 2);
-  (* ordre décroissant : v1 (plus loin) doit être avant v0 *)
-  let [(v_a, d_a); (v_b, d_b)] = l in
-  assert (d_a >= d_b);
-  assert (d_a = d1);
-  assert (d_b = d0);
-
-  (* --- insertion 3 --- *)
-  let l, r = insert v2 d2 l r 3 in
-  assert (r = 3);
-  assert (List.length l = 3);
-  (* tri décroissant attendu : v1 (plus loin), v2, v0 (plus proche) *)
-  let [(v_a, d_a); (v_b, d_b); (v_c, d_c)] = l in
-  assert (d_a >= d_b && d_b >= d_c);
-  assert (abs_float (d_a -. d1) < 1e-9);
-  assert (abs_float (d_b -. d2) < 1e-9);
-  assert (abs_float (d_c -. d0) < 1e-9);
-
-  (* --- insertion 4 (inutile) --- *)
-  let l', r' = insert v1 d1 l r 3 in
-  assert (r' = 3);
-  assert (l' = l);
-  (* toujours triée et identique *)
-  let [(v_a, d_a); (v_b, d_b); (v_c, d_c)] = l' in
-  assert (d_a >= d_b && d_b >= d_c);
-  assert (abs_float (d_a -. d1) < 1e-9);
-  assert (abs_float (d_b -. d2) < 1e-9);
-  assert (abs_float (d_c -. d0) < 1e-9)
-
 (* Renvoie les (au plus) n vecteurs les plus proches de x dans l (triés par ordre décroissant de distance) *)
 let k_nearest_among (l: vector list) (x: vector) (n: int) : vector list =
   let rec k_nearest_among_aux (l: vector list) (x: vector) (kn: (vector*float) list) (r: int) : (vector*float) list =
@@ -231,40 +196,45 @@ let rec pp_voisins (t: kd_tree) (x: vector) (n: int) : vector list =
     if x.(i) <= v.(i) then check_from g
     else check_from d
 
-let concat_4 (s: (vector*float) list) (ns: (vector*float) list) (l: (vector*float) list) (l': (vector*float) list) (n: int) : (vector*float) list =
-  let rec concat_4_aux (s: (vector*float) list) (ns: (vector*float) list) (l: (vector*float) list) (l': (vector*float) list) (acc: (vector*float) list) (r: int) : (vector*float) list =
+(* 
+  Soit x un vecteur quelconque.
+  Renvoie une liste de n couples (vecteur, distance à x) dont la distance à x minimise celles des couples de s, ns, l et l'.
+  On suppose que s, ns, l et l' sont triées par ordre croissant de distance à x.
+*)
+let concat_4_until (s: (vector*float) list) (ns: (vector*float) list) (l: (vector*float) list) (l': (vector*float) list) (n: int) : (vector*float) list =
+  let rec concat_4_until_aux (s: (vector*float) list) (ns: (vector*float) list) (l: (vector*float) list) (l': (vector*float) list) (acc: (vector*float) list) (r: int) : (vector*float) list =
   if r = n then List.rev acc
   else
     match s, ns, l, l' with
     | [], [], [], [] -> List.rev acc
-    | c::q, [], [], [] | [], c::q, [], [] | [], [], c::q, [] | [], [], [], c::q -> concat_4_aux q [] [] [] (c::acc) (r+1)
+    | c::q, [], [], [] | [], c::q, [], [] | [], [], c::q, [] | [], [], [], c::q -> concat_4_until_aux q [] [] [] (c::acc) (r+1)
     | c::q, c'::q', [], [] | [], c::q, c'::q', [] | [], [], c::q, c'::q'
     | c::q, [], [], c'::q' | [], c::q, [], c'::q' | c::q, [], c'::q', []
     -> if snd c < snd c' then
-        concat_4_aux q (c'::q') [] [] (c::acc) (r+1)
+        concat_4_until_aux q (c'::q') [] [] (c::acc) (r+1)
        else
-        concat_4_aux q' (c::q) [] [] (c'::acc) (r+1)
+        concat_4_until_aux q' (c::q) [] [] (c'::acc) (r+1)
     | (v1, d1)::q1, (v2, d2)::q2, (v3, d3)::q3, [] | (v1, d1)::q1, (v2, d2)::q2, [], (v3, d3)::q3 | (v1, d1)::q1, [], (v2, d2)::q2, (v3, d3)::q3 | [], (v1, d1)::q1, (v2, d2)::q2, (v3, d3)::q3
       -> if d1 < d2 && d1 < d3 then
-            concat_4_aux q1 ((v2, d2)::q2) ((v3, d3)::q3) [] ((v1, d1)::acc) (r+1)
+            concat_4_until_aux q1 ((v2, d2)::q2) ((v3, d3)::q3) [] ((v1, d1)::acc) (r+1)
          else if d2 < d1 && d2 < d3 then
-            concat_4_aux ((v1, d1)::q1) q2 ((v3, d3)::q3) [] ((v2, d2)::acc) (r+1)
+            concat_4_until_aux ((v1, d1)::q1) q2 ((v3, d3)::q3) [] ((v2, d2)::acc) (r+1)
          else
-            concat_4_aux ((v1, d1)::q1) ((v2, d2)::q2) q3 [] ((v3, d3)::acc) (r+1)
+            concat_4_until_aux ((v1, d1)::q1) ((v2, d2)::q2) q3 [] ((v3, d3)::acc) (r+1)
     | (v1, d1)::q1, (v2, d2)::q2, (v3, d3)::q3, (v4, d4)::q4 ->
         if d1 < d2 && d1 < d3 && d1 < d4 then
-          concat_4_aux q1 ns l l' ((v1, d1)::acc) (r+1)
+          concat_4_until_aux q1 ns l l' ((v1, d1)::acc) (r+1)
         else if d2 < d1 && d2 < d3 && d2 < d4 then
-          concat_4_aux s q2 l l' ((v2, d2)::acc) (r+1)
+          concat_4_until_aux s q2 l l' ((v2, d2)::acc) (r+1)
         else if d3 < d1 && d3 < d2 && d3 < d4 then
-          concat_4_aux s ns q3 l' ((v3, d3)::acc) (r+1)
+          concat_4_until_aux s ns q3 l' ((v3, d3)::acc) (r+1)
         else
-          concat_4_aux s ns l q4 ((v4, d4)::acc) (r+1)
+          concat_4_until_aux s ns l q4 ((v4, d4)::acc) (r+1)
   in
-  concat_4_aux s ns l l' [] 0
+  concat_4_until_aux s ns l l' [] 0
 
 
-(* Renvoie les n plus proches voisins de x dans t *)
+(* Renvoie la liste (vecteur, distance à x) des n plus proches voisins de x dans t *)
 let rec pp_voisins_2_aux (t: kd_tree) (x: vector) (n: int) : (vector*float) list =
   if n = 0 then []
   else
@@ -278,18 +248,21 @@ let rec pp_voisins_2_aux (t: kd_tree) (x: vector) (n: int) : (vector*float) list
       let s, ns = List.partition (fun (c, d_c) -> d_c <= dist_from_sep) lc in
       let p = n - (List.length s) in
       let lc' = pp_voisins_2_aux other_direction x p in
-      concat_4 s ns lc' [v, (sq_distance v x)] n
+      concat_4_until s ns lc' [v, (sq_distance v x)] n
     in
     if x.(i) <= v.(i) then check_from g
     else check_from d
 
+(* Renvoie la liste des n plus proches voisins de x dans t *)
 let pp_voisins_2 (t: kd_tree) (x: vector) (n: int) : vector list =
   List.map fst (pp_voisins_2_aux t x n)
 
+(* Affiche v *)
 let draw_one_nn (v: vector) : unit =
   let dx', dy' = to_x v.(0), to_y v.(1) in
   Graphics.fill_circle dx' dy' 5
 
+(* Affiche le plus proche voisin de x en utilisant pp_voisin *)
 let draw_nn (t: kd_tree) (x: vector) : unit =
   let dx, dy = to_x x.(0), to_y x.(1) in
   Graphics.set_color red;
@@ -306,6 +279,7 @@ let draw_nn (t: kd_tree) (x: vector) : unit =
       Graphics.draw_circle dx dy dist
     end
 
+(* Affiche les n plus proches voisins de x en utilisant pp_voisins_2 *)
 let draw_knn (t: kd_tree) (x: vector) (n: int) : unit =
   Graphics.set_color red;
   draw_one_nn x;
@@ -320,6 +294,7 @@ let draw_knn (t: kd_tree) (x: vector) (n: int) : unit =
   let dist: int = (dx - dx') * (dx - dx') + (dy - dy') * (dy - dy') |> float_of_int |> Float.sqrt |> int_of_float in
   Graphics.draw_circle dx dy dist
 
+(* Compare deux vecteurs v1 et v2 par rapport à leur distance à x *)
 let compare_vect_from (x: vector) (v1: vector) (v2: vector): int =
   let d1 = sq_distance x v1 in
   let d2 = sq_distance x v2 in
@@ -327,15 +302,18 @@ let compare_vect_from (x: vector) (v1: vector) (v2: vector): int =
   else if d1 > d2 then 1
   else -1
 
-
-let compare_ppv (nb_vector: int) (nb_neigbours: int) (dimension: int) : unit =
-  let t = genere_jeu_donnes nb_vector dimension in
-  let kd_tree = cree_arbre_kd t dimension in
-  let x = Array.init dimension (fun _ -> Random.float 1.) in
+(* Compare les performances des fonctions v1: pp_voisins et v2: pp_voisins_2 
+deux implémentation de l'algorithme des n plus proches voisins
+pour nb_vector vecteurs de dimension k
+*)
+let compare_ppv (nb_vector: int) (n: int) (k: int) : unit =
+  let t = genere_jeu_donnes nb_vector k in
+  let kd_tree = cree_arbre_kd t k in
+  let x = Array.init k (fun _ -> Random.float 1.) in
   let t1 = Sys.time () in
-  let res1 = pp_voisins kd_tree x nb_neigbours in
+  let res1 = pp_voisins kd_tree x n in
   let t2 = Sys.time () in
-  let res2 = pp_voisins_2 kd_tree x nb_neigbours in
+  let res2 = pp_voisins_2 kd_tree x n in
   let t3 = Sys.time () in
 
   let res1 = List.sort (compare_vect_from x) res1 in
@@ -356,3 +334,5 @@ let main_exemple () =
   draw_knn kd_tree (Array.init 2 (fun _ -> Random.float 1.)) n;
   let _ = Graphics.wait_next_event [Key_pressed] in
   Graphics.close_graph ()
+
+let () = main_exemple ()
