@@ -41,10 +41,10 @@ typedef struct laby_s laby_t;
    +?+
    ? |
    +-+
-   
+
    Ainsi entre deux cases a et b de coordonnées (i,j) et (i,j+1), ie l'une à côté de l'autre avec a à gauche,
    il y a un mur ssi la case a est de type 1 ou 3, soit de type impair.
-   Entre deux cases a et b de coordonnées (i,j) et (i+1,j), ie l'une au dessus de l'autre avec a au dessus, 
+   Entre deux cases a et b de coordonnées (i,j) et (i+1,j), ie l'une au dessus de l'autre avec a au dessus,
    il y a un mur ssi la case a est de type 2 ou 3, soit de type de quotient modulo 2 égal à 1.
 */
 
@@ -69,10 +69,12 @@ typedef struct mur_s  mur_t;
 
 
 /*à implémenter dans laby.c*/
+laby_t gen_laby_full(int w, int h);
 void rec_generator(laby_t laby, bool* visited, int i, int j);
 void generate_laby(laby_t laby);
-void* place_mur(laby_t laby, int k1, int k2, mur_t* p_mur);
 mur_t* tab_murs_laby_plein(laby_t laby);
+void melange_liste_murs(mur_t* murs, int n);
+void generate_laby2(laby_t laby);
 bool rec_solver(laby_t laby, bool* chemin, int i, int j);
 bool* solve_labyrinthe(laby_t laby);
 

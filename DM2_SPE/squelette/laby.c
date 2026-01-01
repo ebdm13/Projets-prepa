@@ -1,4 +1,5 @@
 #include "laby.h"
+#include "uf.h"
 
 void draw_laby(laby_t laby) {
 	//affiche le labyrinthe laby avec des caractères ASCII
@@ -98,15 +99,15 @@ bool is_laby_plein(laby_t laby) {
   for(int k=0; k < laby.height; k++){
   	if (laby.cells[k] != 3) return false;
   	//3 est le type des cases ac mur sud et mur est
-  } 
+  }
   return true;
 }
 
 
-int linearise(laby_t laby, int i, int j) { 
-	//indice ds le tableau unidimensionnel de la case de coordonnées (i,j) 
+int linearise(laby_t laby, int i, int j) {
+	//indice ds le tableau unidimensionnel de la case de coordonnées (i,j)
 	//dans le tableau bidimensionnel aux dimensions de laby
-	return i * laby.width + j ; 
+	return i * laby.width + j ;
 }
 
 void delinearise(laby_t laby, int x, int* pi, int* pj) {
@@ -123,9 +124,9 @@ bool is_in_laby(laby_t laby, int i, int j) {
   // teste si la case de coordonnées (i,j) est dans laby
 }
 
-bool can_go_from(laby_t laby, int i1, int j1, int i2, int j2) {	
+bool can_go_from(laby_t laby, int i1, int j1, int i2, int j2) {
 	//hypothèse : is_in_laby(laby,i1,j1) && is_in_laby(laby,i2,j2)
-	//teste l'abscence de mur entre les cases (i1,j1) et (i2,j2) ds laby 
+	//teste l'abscence de mur entre les cases (i1,j1) et (i2,j2) ds laby
   if      (i1 == i2     && j2 == j1 + 1 ) //1 à gauche, 2 à droite
   	{return laby.cells[linearise (laby, i1, j1 )] % 2 == 0;     }
   else if (i1 == i2     && j2 == j1 - 1 ) //2 à gauche, 1 à droite
@@ -142,15 +143,100 @@ bool can_go_from(laby_t laby, int i1, int j1, int i2, int j2) {
 void casse_mur(laby_t laby, int i1, int j1, int i2, int j2) {
 	//hypothèse : is_in_laby(laby,i1,j1) && is_in_laby(laby,i2,j2)
 	//casse le mur entre la case (i1,j1) et la case (i2,j2) dans laby
-  if      (i1 == i2   && j2 == j1 + 1 ) 
+  if      (i1 == i2   && j2 == j1 + 1 )
   	{laby.cells[linearise (laby, i1, j1 )] = (laby.cells[linearise (laby, i1, j1 )] / 2 ) * 2;}
-  else if (i1 == i2   && j2 == j1 - 1 ) 
+  else if (i1 == i2   && j2 == j1 - 1 )
   	{laby.cells[linearise (laby, i2, j2 )] = (laby.cells[linearise (laby, i2, j2 )] / 2 ) * 2;}
-  else if (i2 == i1+1 && j1 == j2     ) 
+  else if (i2 == i1+1 && j1 == j2     )
   	{laby.cells[linearise (laby, i1, j1 )] =  laby.cells[linearise (laby, i1, j1 )] % 2;}
-  else if (i1 == i2+1 && j1 == j2     ) 
+  else if (i1 == i2+1 && j1 == j2     )
   	{laby.cells[linearise (laby, i2, j2 )] =  laby.cells[linearise (laby, i2, j2 )] % 2;}
 }
 
+laby_t gen_laby_full(int w, int h){
+    laby_t laby;
+    laby.height = h;
+    laby.width = w;
+    laby.cells = malloc(sizeof(char) * h * w);
+    for (int i = 0; i < h * w; i++) {
+        laby.cells[i] = 3;
+    }
+    return laby;
+}
 
+void rec_generator(laby_t laby, bool* visited, int i, int j){
+    int cases[4][2] = {{i+1, j}, {i-1, j}, {i, j+1}, {i, j-1}};
+    for (int k = 0; k<4; k++) {
+        int r = rand() % (4 - k);
+        int new_i = cases[r+k][0], new_j = cases[r+k][1];
+        cases[r+k][0] = cases[k][0], cases[r+k][1] = cases[k][1];
+        cases[k][0] = new_i, cases[k][1] = new_j;
 
+        int cl = linearise(laby, new_i, new_j);
+        if (is_in_laby(laby, new_i, new_j) && !visited[cl]){
+            visited[cl] = true;
+            casse_mur(laby, i, j, new_i, new_j);
+            rec_generator(laby, visited, new_i, new_j);
+        }
+    }
+}
+
+void generate_laby(laby_t laby){
+    bool* visited = calloc(laby.height * laby.width, sizeof(bool));
+    visited[0] = true;
+    rec_generator(laby, visited, 0, 0);
+    free(visited);
+}
+
+mur_t* tab_murs_laby_plein(laby_t laby){
+    int w = laby.width, h = laby.height;
+    mur_t* murs = malloc(sizeof(mur_t) * (2*w*h - w - h));
+    int k = 0;
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++){
+            if (j < w-1){
+                murs[k].i1 = i; murs[k].j1 = j; murs[k].i2 = i; murs[k++].j2 = j+1;
+            }
+            if (i < h - 1){
+                murs[k].i1 = i; murs[k].j1 = j; murs[k].i2 = i+1; murs[k++].j2 = j;
+            }
+        }
+    }
+    return murs;
+}
+
+void melange_liste_murs(mur_t* murs, int n){
+    for (int i = n-1; i > 0 ; i--) {
+        int j = rand() % (i+1);
+        mur_t temp = murs[i];
+        murs[i] = murs[j];
+        murs[j] = temp;
+    }
+}
+
+void generate_laby2(laby_t laby){
+    int w = laby.width, h = laby.height;
+    int n = 2*w*h - w - h;
+    mur_t* murs= tab_murs_laby_plein(laby);
+    melange_liste_murs(murs, n);
+    uf_partition_t p = uf_initialize(w*h);
+    int breaked_wall = 0;
+    int i_mur = 0;
+    while (breaked_wall < w*h-1){
+        assert(i_mur < n);
+        int c1 = linearise(laby, murs[i_mur].i1, murs[i_mur].j1);
+        int c2 = linearise(laby, murs[i_mur].i2, murs[i_mur].j2);
+        if (uf_find(p[c1]) != uf_find(p[c2])){
+            casse_mur(laby, murs[i_mur].i1, murs[i_mur].j1, murs[i_mur].i2, murs[i_mur].j2);
+            uf_union(p[c1], p[c2]);
+            breaked_wall++;
+        }
+        i_mur++;
+    }
+    free(murs);
+    uf_free(p, w*h);
+}
+
+bool rec_solver(laby_t laby, bool* chemin, int i, int j);
+
+bool* solve_labyrinthe(laby_t laby);
