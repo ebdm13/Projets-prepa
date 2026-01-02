@@ -1,5 +1,6 @@
 #include "laby.h"
 #include "uf.h"
+#include <stdlib.h>
 
 void draw_laby(laby_t laby) {
 	//affiche le labyrinthe laby avec des caractères ASCII
@@ -237,6 +238,67 @@ void generate_laby2(laby_t laby){
     uf_free(p, w*h);
 }
 
-bool rec_solver(laby_t laby, bool* chemin, int i, int j);
+bool rec_solver(laby_t laby, bool* chemin, int i, int j){
+    int cases[4][2] = {{i+1, j}, {i-1, j}, {i, j+1}, {i, j-1}};
+    bool contain_s = (i == laby.height - 1 && j == laby.width - 1);
+    for (int k = 0; k < 4; k++) {
+        int i2 = cases[k][0], j2 = cases[k][1];
+        int cl = linearise(laby, i2, j2);
+        if (is_in_laby(laby, i2, j2) && !chemin[cl] && can_go_from(laby, i, j, i2, j2)){
+            chemin[cl] = true;
+            bool contain_s2 = rec_solver(laby, chemin, i2, j2);
+            contain_s = contain_s || contain_s2;
+            chemin[cl] = contain_s2;
+        }
+    }
+    return contain_s;
+}
 
-bool* solve_labyrinthe(laby_t laby);
+bool* solve_labyrinthe(laby_t laby){
+    bool* chemin = calloc(laby.width * laby.height, sizeof(bool));
+    chemin[0] = true;
+    rec_solver(laby, chemin, 0, 0);
+    return chemin;
+}
+
+void build_wall(laby_t laby, int i1, int j1, int i2, int j2){
+    if (i1 <= i2 && j1 <= j2){
+        laby.cells[linearise(laby, i1, j1)] += (j2 - j1) + 2 * (i2 - i1);
+    } else {
+        laby.cells[linearise(laby, i2, j2)] += (j1 - j2) + 2 * (i1 - i2);
+    }
+}
+
+void build_walls(laby_t laby, bool* visited, int i, int j, int parent){
+    int cases[4][2] = {{i+1, j}, {i-1, j}, {i, j+1}, {i, j-1}};
+    for (int k = 0; k < 4; k++) {
+        int i2 = cases[k][0], j2 = cases[k][1];
+        int cl = linearise(laby, i2, j2);
+        if (is_in_laby(laby, i2, j2) && can_go_from(laby, i, j, i2, j2) && cl != parent && visited[cl]){
+            build_wall(laby, i, j, i2, j2);
+        } else if (is_in_laby(laby, i2, j2) && can_go_from(laby, i, j, i2, j2) && !visited[cl]){
+            visited[cl] = true;
+            build_walls(laby, visited, i2, j2, linearise(laby, i, j));
+        }
+    }
+}
+
+void repare(laby_t laby){
+    int w = laby.width, h = laby.height;
+    bool* visited = calloc(w * h, sizeof(bool));
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; j++) {
+            int cl = linearise(laby, i, j);
+            if (!visited[cl]){
+                visited[cl] = true;
+                build_walls(laby, visited, i, j, cl);
+                if (j > 0){
+                    casse_mur(laby, i, j, i, j-1);
+                } else if (i > 0) {
+                    casse_mur(laby, i, j, i-1, j);
+                }
+            }
+        }
+    }
+    free(visited);
+}

@@ -77,5 +77,9 @@ void melange_liste_murs(mur_t* murs, int n);
 void generate_laby2(laby_t laby);
 bool rec_solver(laby_t laby, bool* chemin, int i, int j);
 bool* solve_labyrinthe(laby_t laby);
+// int i_wall(laby_t laby, int i1, int j1, int i2, int j2);
+void build_wall(laby_t laby, int i1, int j1, int i2, int j2);
+void build_walls(laby_t laby, bool* visited, int i, int j, int parent);
+void repare(laby_t laby);
 
 #endif
