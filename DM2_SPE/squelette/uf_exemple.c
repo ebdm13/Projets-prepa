@@ -29,9 +29,6 @@ uf_partition_t exemple() {
   return res;
 }
 
-
-
-
 int main() {
   uf_partition_t ex = exemple();
   print_uf_partition_verbose(ex, 11);

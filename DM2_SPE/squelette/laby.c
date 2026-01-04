@@ -154,6 +154,7 @@ void casse_mur(laby_t laby, int i1, int j1, int i2, int j2) {
   	{laby.cells[linearise (laby, i2, j2 )] =  laby.cells[linearise (laby, i2, j2 )] % 2;}
 }
 
+// Génére un labyrinth plein (avec tous les murs) de largeur w et de hauteur h.
 laby_t gen_laby_full(int w, int h){
     laby_t laby;
     laby.height = h;
@@ -165,9 +166,15 @@ laby_t gen_laby_full(int w, int h){
     return laby;
 }
 
+/* Casse les murs de laby aléatoirement en partant de la case (i, j)
+ * sans casser de murs entre la case qu'on visite actuellement et
+ * une case de visited, le tableau des cases déjà visités par un parous en
+ * profondeur.
+ */
 void rec_generator(laby_t laby, bool* visited, int i, int j){
     int cases[4][2] = {{i+1, j}, {i-1, j}, {i, j+1}, {i, j-1}};
     for (int k = 0; k<4; k++) {
+        // mélange aléatoirement cases.
         int r = rand() % (4 - k);
         int new_i = cases[r+k][0], new_j = cases[r+k][1];
         cases[r+k][0] = cases[k][0], cases[r+k][1] = cases[k][1];
@@ -182,6 +189,8 @@ void rec_generator(laby_t laby, bool* visited, int i, int j){
     }
 }
 
+// Génère un labyrinth parfait avec un parcours en profondeur à partir de laby,
+// un labyrinth plein.
 void generate_laby(laby_t laby){
     bool* visited = calloc(laby.height * laby.width, sizeof(bool));
     visited[0] = true;
@@ -189,6 +198,52 @@ void generate_laby(laby_t laby){
     free(visited);
 }
 
+
+// Génère un labyrinth parfait avec un parcours en profondeur à partir de laby,
+// un labyrinth plein.
+void generate_laby_non_rec(laby_t laby){
+    int w = laby.width, h = laby.height;
+    int* pile = malloc(w*h*sizeof(int));
+    bool* visited = calloc(laby.height * laby.width, sizeof(bool));
+    visited[0] = true;
+    int top = -1;
+    pile[++top] = 0;
+    while (top >= 0){
+        int i, j;
+        delinearise(laby, pile[top], &i, &j);
+
+        int cases[4][2] = {{i+1, j}, {i-1, j}, {i, j+1}, {i, j-1}};
+        for (int k = 0; k<3; k++) {
+            // mélange aléatoirement cases.
+            int r = rand() % (4 - k);
+            int new_i = cases[r+k][0], new_j = cases[r+k][1];
+            cases[r+k][0] = cases[k][0], cases[r+k][1] = cases[k][1];
+            cases[k][0] = new_i, cases[k][1] = new_j;
+        }
+
+        int k_min = 0;
+        while (k_min < 4 && (!is_in_laby(laby, cases[k_min][0], cases[k_min][1]) ||
+            visited[linearise(laby, cases[k_min][0], cases[k_min][1])])) {
+                k_min++;
+        }
+
+        if (k_min < 4){
+            int i_min = cases[k_min][0], j_min = cases[k_min][1];
+            int cl = linearise(laby, i_min, j_min);
+            visited[cl] = true;
+            casse_mur(laby, i, j, i_min, j_min);
+            pile[++top] = cl;
+        } else {
+            top--;
+        }
+    }
+    free(pile);
+    free(visited);
+}
+
+/* Enumère le tableau de tous les murs de laby (présent ou pas).
+ * Ce talbeau est de taille 2wh - w - h.
+  */
 mur_t* tab_murs_laby_plein(laby_t laby){
     int w = laby.width, h = laby.height;
     mur_t* murs = malloc(sizeof(mur_t) * (2*w*h - w - h));
@@ -206,6 +261,7 @@ mur_t* tab_murs_laby_plein(laby_t laby){
     return murs;
 }
 
+// Applique le mélange de Fisher-Yates sur le tableau murs de taille n.
 void melange_liste_murs(mur_t* murs, int n){
     for (int i = n-1; i > 0 ; i--) {
         int j = rand() % (i+1);
@@ -215,6 +271,7 @@ void melange_liste_murs(mur_t* murs, int n){
     }
 }
 
+// Génère un labyrinth parfait à partir de laby, un labyrinth plein en utilisant la structure UnionFind
 void generate_laby2(laby_t laby){
     int w = laby.width, h = laby.height;
     int n = 2*w*h - w - h;
@@ -238,6 +295,10 @@ void generate_laby2(laby_t laby){
     uf_free(p, w*h);
 }
 
+/* Renvoie vrai si il existe un chemin entre (i, j) et (laby.height - 1, laby.width -1) dans laby.
+ * Dans ce cas, chemin contient le chemin de (i, j) vers l'autre case.
+ * Sinon, renvoie faux.
+ */
 bool rec_solver(laby_t laby, bool* chemin, int i, int j){
     int cases[4][2] = {{i+1, j}, {i-1, j}, {i, j+1}, {i, j-1}};
     bool contain_s = (i == laby.height - 1 && j == laby.width - 1);
@@ -254,6 +315,10 @@ bool rec_solver(laby_t laby, bool* chemin, int i, int j){
     return contain_s;
 }
 
+/* Renvoie une solution du labyrinth laby.
+ * La solution est le tableau des cases qui apparaisent dans le chemin solution.
+ * Hyptohèse: il existe un chemin du début à la fin de laby.
+ */
 bool* solve_labyrinthe(laby_t laby){
     bool* chemin = calloc(laby.width * laby.height, sizeof(bool));
     chemin[0] = true;
@@ -261,14 +326,28 @@ bool* solve_labyrinthe(laby_t laby){
     return chemin;
 }
 
+/* Construit le mur entre la case (i1, j1) et (i2, j2) dans laby
+ * Hypothèses: - is_in_laby(laby,i1,j1) && is_in_laby(laby,i2,j2)
+ *             - abs(i1 - i2) <= 1 && abs(j1 - j2) <= 1
+ */
 void build_wall(laby_t laby, int i1, int j1, int i2, int j2){
-    if (i1 <= i2 && j1 <= j2){
-        laby.cells[linearise(laby, i1, j1)] += (j2 - j1) + 2 * (i2 - i1);
-    } else {
-        laby.cells[linearise(laby, i2, j2)] += (j1 - j2) + 2 * (i1 - i2);
+    if (can_go_from(laby, i1, j1, i2, j2)){
+        if (i1 <= i2 && j1 <= j2){
+                laby.cells[linearise(laby, i1, j1)] += (j2 - j1) + 2 * (i2 - i1);
+            } else {
+                laby.cells[linearise(laby, i2, j2)] += (j1 - j2) + 2 * (i1 - i2);
+            }
     }
+
 }
 
+/* Construit des murs dans laby de sorte que le labyrinth
+ * constitué de toutes les cases accésibles depuis (i, j) soit parfait.
+ * (i.e rend le graphe sous-jacent acyclique).
+ * visited est le talbeau qui représente les cases déjà visités.
+ * parent est la linéarisation de la case du prédécesseur dans le parcours,
+ * où de (i, j) si il n'y en a pas.
+*/
 void build_walls(laby_t laby, bool* visited, int i, int j, int parent){
     int cases[4][2] = {{i+1, j}, {i-1, j}, {i, j+1}, {i, j-1}};
     for (int k = 0; k < 4; k++) {
@@ -283,6 +362,11 @@ void build_walls(laby_t laby, bool* visited, int i, int j, int parent){
     }
 }
 
+/* Laby est un labyrinth quelconque.
+ * "Répare" laby i.e rend laby parfait tout en conservant
+ * au mois un chemin qui existait déjà entre deux cases.
+ * (En temps linéaire: O(wh)).
+ */
 void repare(laby_t laby){
     int w = laby.width, h = laby.height;
     bool* visited = calloc(w * h, sizeof(bool));

@@ -3,7 +3,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/types.h>
 #include <time.h>
 #include <stdbool.h>
 #include <assert.h>
@@ -72,12 +71,12 @@ typedef struct mur_s  mur_t;
 laby_t gen_laby_full(int w, int h);
 void rec_generator(laby_t laby, bool* visited, int i, int j);
 void generate_laby(laby_t laby);
+void generate_laby_non_rec(laby_t laby);
 mur_t* tab_murs_laby_plein(laby_t laby);
 void melange_liste_murs(mur_t* murs, int n);
 void generate_laby2(laby_t laby);
 bool rec_solver(laby_t laby, bool* chemin, int i, int j);
 bool* solve_labyrinthe(laby_t laby);
-// int i_wall(laby_t laby, int i1, int j1, int i2, int j2);
 void build_wall(laby_t laby, int i1, int j1, int i2, int j2);
 void build_walls(laby_t laby, bool* visited, int i, int j, int parent);
 void repare(laby_t laby);
