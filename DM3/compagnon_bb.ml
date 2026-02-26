@@ -1,3 +1,9 @@
+let rec pgcd (a: int) (b: int) : int =
+  let a,b = abs(a), abs(b) in
+  let a, b = if a >= b then a,b else b, a in
+  if b = 0 then a
+  else pgcd b (a mod b)
+
 module Q = struct
   type t = int * int
   (* (a, b) encode a/b*)
@@ -6,8 +12,40 @@ module Q = struct
   (*     encode en fait l'égalité sémantique de Q : a/b = c/d *)
   let print ((a, b): t) = Printf.printf "%d/%d" a b
   let dirty_print ((a, b): t) = Printf.printf "%.2f" ((float_of_int a) /. (float_of_int b))
-
+  let (+/) (p, q: t) (p', q': t) : t =
+    let a = p * q' + p' * q in
+    let b = q*q' in
+    let d = pgcd a b in
+     a / d, b / d
+  let (~/) (p, q: t): t = -p, q
+  let (-/) (a: t) (b: t) : t = a +/ (~/ b)
+  let ( */ ) (p, q: t) (p', q': t) : t =
+    if p = 0 || p' = 0 then (0, 1)
+    else begin
+    let a = p * p' in
+    let b = q * q' in
+    let d = pgcd a b in
+    a / d, b / d
+    end
+  let (//) (a: t) (p, q: t) : t = if p = 0 then raise Division_by_zero else a */ (q, p)
+  let (</) (p, q: t) (p', q': t) : bool = p * q' < p' * q
+  let (>/) (p, q: t) (p', q': t) : bool = p * q' > p' * q
+  let (<=/) (p, q: t) (p', q': t) : bool = p * q' <= p' * q
+  let (>=/) (p, q: t) (p', q': t) : bool = p * q' >= p' * q
+  let is_int (p, q: t) : bool = q = 1
+  let int_to_q (n: int) : t = (n, 1)
+  let sgn (p, _: t) : int =
+    if p = 0 then 0
+    else if p > 0 then 1
+    else -1
+  let format (p, q: t) : t =
+    let s = sgn (p,q) * (sgn (q, p)) in
+    if s = 0 then (if q = 0 then raise Division_by_zero else 0, 1)
+    else (let d = pgcd p q in
+        s * abs(p) / d, abs(q) / d)
 end
+
+open Q
 
 type sad =
   {
@@ -143,6 +181,7 @@ let rec pow (a: int) (n: int) : int =
     else pow (a * a) (n/2) * a
   end
 
+
 (* Renvoie une solution optimale pour l'instance e avec la contrainte m.
    None si le masque n'est pas valide
 *)
@@ -194,3 +233,55 @@ let prog_dyn (e: sad) : solution * int =
     else ()
   done;
   sol_opt, s.(e.n).(e.p)
+
+let masque_to_sol (e: sad) (m: masque) : solution =
+  let sol = Array.make e.n false in
+  for i = 0 to e.n - 1 do
+    match m.(i) with
+    | Some(x) -> sol.(i) <- x
+    | _ -> ()
+  done;
+  sol
+
+let glouton_n (e: sad) (m: masque) : (solution * int) option =
+  let sol = masque_to_sol e m in
+  let w = ref (poids_sol e sol) in
+  let v = ref (valeur_sol e sol) in
+  if !w > e.p then None
+  else begin
+    for i = 0 to e.n -1 do
+      if !w + e.wi.(i) <= e.p && m.(i) = None then begin
+        sol.(i) <- true;
+        w := !w + e.wi.(i);
+        v := !v + e.vi.(i)
+        end
+      else ()
+    done;
+    Some(sol, !v)
+    end
+
+
+let glouton_r (e: sad) (m: masque) : (qsolution * Q.t) option =
+  let sol = Array.make e.n (0, 1) in
+  let w = ref (0, 1) in
+  let v = ref (0, 1) in
+  for i = 0 to e.n - 1 do
+    match m.(i) with
+    | Some(true) -> sol.(i) <- (1, 1); w := !w +/ (e.wi.(i), 1); v := !v +/ (e.vi.(i), 1)
+    | _ -> ()
+  done;
+  if !w >/ (e.p, 1) then None
+  else begin
+    let i = ref 0 in
+    while !i < e.n && !w </ (e.p, 1) do
+      if m.(!i) = None then begin
+        if !w +/ (e.wi.(!i), 1) <=/ (e.p, 1) then (
+          sol.(!i) <- (1, 1); w := !w +/ (e.wi.(!i), 1); v := !v +/ (e.vi.(!i), 1) )
+        else (
+          sol.(!i) <- ((e.p,1) -/ !w) // (e.wi.(!i), 1); w := (e.p, 1); v := !v +/ (sol.(!i) */ (e.vi.(!i), 1)))
+      end
+      else ();
+      incr i
+    done;
+    Some(sol, !v)
+  end
