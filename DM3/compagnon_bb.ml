@@ -285,3 +285,65 @@ let glouton_r (e: sad) (m: masque) : (qsolution * Q.t) option =
     done;
     Some(sol, !v)
   end
+
+let impose_i (m: masque) (i: int) (b: bool) : masque =
+  let m' = Array.copy m in m'.(i) <- Some(b); m'
+
+let find_i_frac (s: qsolution) : int =
+  let i = ref 0 in
+  let n = Array.length s in
+  while !i < n && snd s.(!i) = 1 do incr i done;
+  !i
+
+let branch_and_bound (e: sad) : solution * int =
+  let best_value = ref 0 in
+  let best_sol = Array.make e.n false in
+  let todo = Queue.create () in
+  Queue.push (Array.make e.n None) todo;
+  while not (Queue.is_empty todo) do
+    let m = Queue.pop todo in
+    match glouton_r e m with
+    | Some(s_q, v_q) when v_q >/ (!best_value, 1) -> begin
+      match glouton_n e m with
+      | Some(s_n, v_n) ->
+        if v_n > !best_value then begin
+          best_value := v_n;
+          Array.blit s_n 0 best_sol 0 e.n
+        end;
+        if v_q >=/ (v_n + 1, 1) then begin
+          let i_sep = find_i_frac s_q in
+          Queue.push (impose_i m i_sep false) todo;
+          Queue.push (impose_i m i_sep true) todo
+        end
+      | _ -> ()
+      end
+    | _ -> ()
+  done;
+  best_sol, !best_value
+
+let compare_algo (n: int) (p: int) : unit =
+  let e: sad = {
+    n = n;
+    p = p;
+    wi = Array.init n (fun _ -> 1 + Random.int p);
+    vi = Array.init n (fun _ -> Random.int (n*5));
+  } in
+  let i_t = Array.init n (fun i -> i) in
+  Array.sort (fun i j -> e.vi.(j) * e.wi.(i) - e.vi.(i) * e.wi.(j)) i_t;
+  let wi' = Array.init n (fun k -> e.wi.(i_t.(k))) in
+  let vi' = Array.init n (fun k -> e.vi.(i_t.(k))) in
+  Array.blit wi' 0 e.wi 0 n;
+  Array.blit vi' 0 e.vi 0 n;
+
+  let t_1 = Sys.time () in
+  let s_1, v_1 = prog_dyn e in
+  let t_2 = Sys.time () in
+  let s_2, v_2 = branch_and_bound e in
+  let t_3 = Sys.time () in
+
+  Printf.printf "Temps (s): prog_dyn: %f, B&B: %f\n" (t_2 -. t_1) (t_3 -. t_2);
+  Printf.printf "Valeur: prog_dyn: %d, B&B: %d\n" v_1 v_2;
+  Printf.printf "Poids: prog_dyn: %d, B&B: %d\n" (poids_sol e s_1) (poids_sol e s_2);
+  if s_1 = s_2 then
+  print_string "Mêmes solutions\n"
+  else print_string "Solutions différentes\n"
