@@ -1,7 +1,8 @@
+(* Elie Bellot des Minières *)
+
+(* Calcule le pgcd de a et b *)
 let rec pgcd (a: int) (b: int) : int =
-  let a,b = abs(a), abs(b) in
-  let a, b = if a >= b then a,b else b, a in
-  if b = 0 then a
+  if b = 0 then abs(a)
   else pgcd b (a mod b)
 
 module Q = struct
@@ -12,11 +13,14 @@ module Q = struct
   (*     encode en fait l'égalité sémantique de Q : a/b = c/d *)
   let print ((a, b): t) = Printf.printf "%d/%d" a b
   let dirty_print ((a, b): t) = Printf.printf "%.2f" ((float_of_int a) /. (float_of_int b))
+
   let (+/) (p, q: t) (p', q': t) : t =
     let a = p * q' + p' * q in
     let b = q*q' in
     let d = pgcd a b in
      a / d, b / d
+
+  (* Opposé*)
   let (~/) (p, q: t): t = -p, q
   let (-/) (a: t) (b: t) : t = a +/ (~/ b)
   let ( */ ) (p, q: t) (p', q': t) : t =
@@ -32,12 +36,16 @@ module Q = struct
   let (>/) (p, q: t) (p', q': t) : bool = p * q' > p' * q
   let (<=/) (p, q: t) (p', q': t) : bool = p * q' <= p' * q
   let (>=/) (p, q: t) (p', q': t) : bool = p * q' >= p' * q
+  (* Teste si (p, q) est un entier*)
   let is_int (p, q: t) : bool = q = 1
+  (* renvoie le rationel correspondant à n *)
   let int_to_q (n: int) : t = (n, 1)
+  (* Renvoie le signe de p,_ *)
   let sgn (p, _: t) : int =
     if p = 0 then 0
     else if p > 0 then 1
     else -1
+  (* Transforme un couple en élément de Q.t qui vérifie l'invariant *)
   let format (p, q: t) : t =
     let s = sgn (p,q) * (sgn (q, p)) in
     if s = 0 then (if q = 0 then raise Division_by_zero else 0, 1)
@@ -73,7 +81,7 @@ let ex_sol2: solution = [|true; true; true; true; false; true|]
 let ex_masque: masque = [|Some(true); Some(true); None; None; Some(false); Some(true)|]
 let ex_masque2: masque = [|Some(true); Some(true); Some(true); Some(true); Some(false); Some(true)|]
 
-  type qsolution = Q.t array
+type qsolution = Q.t array
 
 (* Fonction d'affichage d'un tableau *)
 let affiche_array_param (pp: 'a -> unit) (m: 'a array) =
@@ -111,10 +119,10 @@ let affiche_qsolution (m: qsolution) =
 (* Test si l'instance e est valide *)
 let est_sad_valide (e: sad) : bool =
   let res = ref true in
-  res := (e.vi.(0) > 0 && e.wi.(0) > 0 && Array.length e.wi = Array.length e.vi) && (Array.length e.vi = e.n) && (e.wi.(0) <= e.p);
+  res := (e.vi.(0) >= 0 && e.wi.(0) > 0 && Array.length e.wi = Array.length e.vi) && (Array.length e.vi = e.n) && (e.wi.(0) <= e.p);
   let i = ref 1 in
   while !i < e.n && !res do
-    res := e.vi.(!i) > 0 && e.wi.(!i) > 0 && (e.wi.(!i) <= e.p) && (e.vi.(!i-1) * e.wi.(!i) >= e.vi.(!i) * e.wi.(!i-1));
+    res := e.vi.(!i) >= 0 && e.wi.(!i) > 0 && (e.wi.(!i) <= e.p) && (e.vi.(!i-1) * e.wi.(!i) >= e.vi.(!i) * e.wi.(!i-1));
     incr i
   done;
   !res
@@ -211,6 +219,7 @@ let brute_force (e: sad) (m: masque) : (solution * int) option =
     done;
     Some (sol_opt, !valeur_opt))
 
+(* Retourne le tableau de programmation dynamique pour l'instance e *)
 let prog_dyn_tab (e: sad) : int array array =
   let s = Array.init (e.n + 1) (fun _ -> Array.make (e.p + 1) 0) in
   for i = 1 to e.n do
@@ -221,6 +230,9 @@ let prog_dyn_tab (e: sad) : int array array =
   done;
   s
 
+(* Retourne une solution optimale ainsi que la valeur optimal pour l'instance e
+En utilisant la programmation dynamique.
+*)
 let prog_dyn (e: sad) : solution * int =
   let s = prog_dyn_tab e in
   let sol_opt = Array.make e.n false in
@@ -234,17 +246,17 @@ let prog_dyn (e: sad) : solution * int =
   done;
   sol_opt, s.(e.n).(e.p)
 
-let masque_to_sol (e: sad) (m: masque) : solution =
+(* Renvoie une solution gloutonne et sa valeur pour l'instence e avec le masque m,
+   en ajoutant les objets par rapport valeurs/poids décroissante.
+   ⚠ e.wi et e.vi doivent êtres triées selon cette ordre.
+*)
+let glouton_n (e: sad) (m: masque) : (solution * int) option =
   let sol = Array.make e.n false in
   for i = 0 to e.n - 1 do
     match m.(i) with
-    | Some(x) -> sol.(i) <- x
+    | Some(true) -> sol.(i) <- true
     | _ -> ()
   done;
-  sol
-
-let glouton_n (e: sad) (m: masque) : (solution * int) option =
-  let sol = masque_to_sol e m in
   let w = ref (poids_sol e sol) in
   let v = ref (valeur_sol e sol) in
   if !w > e.p then None
@@ -260,7 +272,11 @@ let glouton_n (e: sad) (m: masque) : (solution * int) option =
     Some(sol, !v)
     end
 
-
+(* Renvoie une solution optimale pour le problème relaché (algo glouton fractionnaire)
+  et sa valeur avec l'instence e et le masque m,
+  en ajoutant les objets par rapport valeurs/poids décroissante.
+  ⚠ e.wi et e.vi doivent êtres triées selon cette ordre.
+*)
 let glouton_r (e: sad) (m: masque) : (qsolution * Q.t) option =
   let sol = Array.make e.n (0, 1) in
   let w = ref (0, 1) in
@@ -286,15 +302,22 @@ let glouton_r (e: sad) (m: masque) : (qsolution * Q.t) option =
     Some(sol, !v)
   end
 
+(* Retourne une copy de m en ajoutant m.(i) <- Some(b) (la coutrainte) *)
 let impose_i (m: masque) (i: int) (b: bool) : masque =
   let m' = Array.copy m in m'.(i) <- Some(b); m'
 
+(* Retourne le premier indice de s tel que s.(i) est rationnel (pas entier).
+   Array.length s si il n'existe pas.
+*)
 let find_i_frac (s: qsolution) : int =
   let i = ref 0 in
   let n = Array.length s in
   while !i < n && snd s.(!i) = 1 do incr i done;
   !i
 
+(* Retourne une solution optimal et la valeur optimal pour l'instance exit
+   En utilisant l'algo du branch and bound.
+*)
 let branch_and_bound (e: sad) : solution * int =
   let best_value = ref 0 in
   let best_sol = Array.make e.n false in
@@ -311,6 +334,7 @@ let branch_and_bound (e: sad) : solution * int =
           Array.blit s_n 0 best_sol 0 e.n
         end;
         if v_q >=/ (v_n + 1, 1) then begin
+          (* la condition assure entre autres que i_sep existe i.e est != n*)
           let i_sep = find_i_frac s_q in
           Queue.push (impose_i m i_sep false) todo;
           Queue.push (impose_i m i_sep true) todo
@@ -321,6 +345,7 @@ let branch_and_bound (e: sad) : solution * int =
   done;
   best_sol, !best_value
 
+(* Compare les performances de branch_and_bound et prog_dyn *)
 let compare_algo (n: int) (p: int) : unit =
   let e: sad = {
     n = n;
@@ -335,6 +360,8 @@ let compare_algo (n: int) (p: int) : unit =
   Array.blit wi' 0 e.wi 0 n;
   Array.blit vi' 0 e.vi 0 n;
 
+  assert(est_sad_valide e);
+
   let t_1 = Sys.time () in
   let s_1, v_1 = prog_dyn e in
   let t_2 = Sys.time () in
@@ -342,8 +369,94 @@ let compare_algo (n: int) (p: int) : unit =
   let t_3 = Sys.time () in
 
   Printf.printf "Temps (s): prog_dyn: %f, B&B: %f\n" (t_2 -. t_1) (t_3 -. t_2);
-  Printf.printf "Valeur: prog_dyn: %d, B&B: %d\n" v_1 v_2;
+  Printf.printf "Valeur optimal: %d\n" v_1;
+  assert(v_1 = v_2);
   Printf.printf "Poids: prog_dyn: %d, B&B: %d\n" (poids_sol e s_1) (poids_sol e s_2);
   if s_1 = s_2 then
   print_string "Mêmes solutions\n"
   else print_string "Solutions différentes\n"
+
+let test_fonctions_utilitaire () : unit =
+  assert(est_sad_valide ex);
+  assert(valeur_sol ex ex_sol = 34);
+  assert(valeur_sol ex ex_sol2 = 77);
+  assert(poids_sol ex ex_sol = 19);
+  assert(poids_sol ex ex_sol2 = 43);
+  assert(est_masque_valide ex ex_masque);
+  assert(not (est_masque_valide ex ex_masque2));
+  assert(pow 2 4 = 16);
+  assert(pow (-3) 3 = -27);
+  assert(find_i_frac [|(3, 1); (2, 1); (-1, 2); (2, 3)|] = 2)
+
+let test_Q_module () =
+  assert (format (2, 4) = (1, 2));
+  assert (format (-2, 4) = (-1, 2));
+  assert (format (2, -4) = (-1, 2));
+  assert (format (0, 5) = (0, 1));
+
+  assert ((1,2) +/ (1,2) = (1,1));
+  assert ((1,3) +/ (1,6) = (1,2));
+  assert ((-1,2) +/ (1,2) = (0,1));
+
+  assert (~/ (1,3) = (-1,3));
+  assert ((3,4) -/ (1,4) = (1,2));
+
+  assert ((2,3) */ (3,4) = (1,2));
+  assert ((0,1) */ (5,7) = (0,1));
+
+  assert ((1,2) // (3,4) = (2,3));
+
+  assert ((1,2) </ (2,3));
+  assert ((3,4) >/ (1,2));
+  assert ((2,4) <=/ (1,2));
+  assert ((3,6) >=/ (1,2));
+
+  assert (sgn (3,4) = 1);
+  assert (sgn (-3,4) = -1);
+  assert (sgn (0,1) = 0)
+
+
+let test_next () : unit =
+  next ex_masque ex_sol;
+  (* Respecte le masque ?*)
+  assert(ex_sol.(0) && ex_sol.(1) && not ex_sol.(4) && ex_sol.(5));
+  (* Bien le suivant ? *)
+  assert(ex_sol.(2) && not ex_sol.(3));
+
+  next ex_masque ex_sol;
+  assert(ex_sol.(0) && ex_sol.(1) && not ex_sol.(4) && ex_sol.(5));
+  assert(not ex_sol.(2) && ex_sol.(3));
+
+  next ex_masque ex_sol;
+  assert(ex_sol.(0) && ex_sol.(1) && not ex_sol.(4) && ex_sol.(5));
+  assert(ex_sol.(2) && ex_sol.(3));
+  next ex_masque ex_sol;
+  assert(ex_sol.(0) && ex_sol.(1) && not ex_sol.(4) && ex_sol.(5));
+  assert(not ex_sol.(2) && not ex_sol.(3))
+
+let test_glouton () : unit =
+  assert(glouton_n ex ex_masque2 = None);
+  assert(glouton_r ex ex_masque2 = None);
+  let Some(s_n, v_n) = glouton_n ex [|None; None; None; None; None; None|] in
+  let Some(s_q, v_q) = glouton_r ex [|None; None; None; None; None; None|] in
+  assert(s_n = [|true; true; false; false; true; false|]);
+  assert(s_q = [|(1, 1); (1, 1); (3, 5); (0, 1); (0, 1); (0, 1)|]);
+  assert(v_n = 32);
+  assert(v_q = (202, 5));
+  assert((v_n, 1) <=/ v_q)
+
+let test_algo () : unit =
+  let Some (s_1, v_1) = brute_force ex [|None; None; None; None; None; None|] in
+  let s_2, v_2 = prog_dyn ex in
+  let s_3, v_3 = branch_and_bound ex in
+  assert(v_1 = v_2 && v_2 = v_3);
+  assert(poids_sol ex s_1 <= ex.p);
+  assert(poids_sol ex s_2 <= ex.p);
+  assert(poids_sol ex s_3 <= ex.p)
+
+  let tests () : unit =
+    test_fonctions_utilitaire ();
+    test_Q_module ();
+    test_next ();
+    test_glouton ();
+    test_algo ()
