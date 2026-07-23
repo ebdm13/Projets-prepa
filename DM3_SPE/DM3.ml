@@ -1,5 +1,3 @@
-(* Elie Bellot des Minières *)
-
 (* Calcule le pgcd de a et b *)
 let rec pgcd (a: int) (b: int) : int =
   if b = 0 then abs(a)
