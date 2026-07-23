@@ -3,7 +3,9 @@
 *.out
 *.synctex.gz
 *.synctex.gz.sum.synctex
-*.wav
 plotwav.py
-Partitions/
-DM1_SPE/squelette/MNIST_txt/
+*.midi
+*.cmi
+*.cmo
+*.cmx
+*.o
