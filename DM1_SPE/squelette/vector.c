@@ -41,6 +41,6 @@ double distance(vector v1, vector v2){
         int diff = (v1->content[i] - v2->content[i]);
         dist_square += diff * diff;
     }
-    //return sqrt(dist_square);
-    return dist_square;
+    return sqrt(dist_square);
+    // return dist_square;
 }

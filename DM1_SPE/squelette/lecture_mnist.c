@@ -42,7 +42,7 @@ void mnist_input(int n, database *p_db_train, int m, database *p_db_test) {
   // remplit * p_db_train avec cette base
   // crée une bd de test avec les m données suivantes du fichier
   // remplit * p_db_test avec cette base
-  FILE *f = fopen("./MNIST-txt/MNIST_train.txt", "r");
+  FILE *f = fopen("./MNIST_txt/MNIST_train.txt", "r");
   if (f == NULL) {
     printf("le fichier ./MNIST-txt/MNIST_train.txt n'a pas pu être ouvert\n");
   }

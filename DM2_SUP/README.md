@@ -23,8 +23,9 @@ Le programme `./compiler` prend 2 ou 3 arguments :
 
 ### **Exemple d'utilisation**
 Pour compiler et exécuter le programme avec une partition d'exemple :
+(A exécuter depuis le dossier src/)
 ```bash
-make compile && ./compiler Partitions/test.ly test.wav -p
+make compile && ./compiler ../Partitions/test.ly test.wav -p
 ```
 
 Dans cet exemple :

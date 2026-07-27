@@ -209,6 +209,17 @@ void tests_repare(int n){
     }
 }
 
+void test_draw(){
+    laby_t laby = gen_laby_full(40, 10);
+	generate_laby2(laby);
+    bool* solution = solve_labyrinthe(laby);
+	
+	draw_laby_with_visited(laby, solution);
+    
+	free(laby.cells);
+	free(solution);
+}
+
 int main() {
     srand(time(NULL));
     tests_est_parfait();
@@ -217,4 +228,5 @@ int main() {
     tests_generate_laby2(100);
     tests_solver();
     tests_repare(100);
+	test_draw();
 }
